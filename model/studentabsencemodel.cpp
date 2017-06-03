@@ -1,5 +1,8 @@
 #include "studentabsencemodel.h"
 
+#include <QtCore>
+#include <QtAlgorithms>
+
 StudentAbsenceModel::StudentAbsenceModel(QObject *parent)
     : QAbstractTableModel(parent)
 {
@@ -86,24 +89,37 @@ bool StudentAbsenceModel::setData(const QModelIndex &index, const QVariant &valu
     {
         try
         {
+            bool *ok = new bool;
+            int int_value = 0;
+
             switch(index.column())
             {
             case NAME:
+
                 studentEntryList[index.row()].name.setFullName(value.toString());
                 break;
             case GROUP:
                 studentEntryList[index.row()].group.setValue(value.toString());
                 break;
             case ILLNESS:
-                studentEntryList[index.row()].absence.setIllness(value.toInt());
+                int_value = value.toInt(ok);
+                if(*ok)
+                    studentEntryList[index.row()].absence.setIllness(int_value);
                 break;
             case ANOTHER:
-                studentEntryList[index.row()].absence.setAnother(value.toInt());
+                int_value = value.toInt(ok);
+                if(*ok)
+                    studentEntryList[index.row()].absence.setAnother(int_value);
                 break;
             case HOOKY:
-                studentEntryList[index.row()].absence.setHooky(value.toInt());;
+                int_value = value.toInt(ok);
+                if(*ok)
+
+                    studentEntryList[index.row()].absence.setHooky(int_value);;
                 break;
             }
+
+            delete ok;
         }
         catch(...)
         {
@@ -139,6 +155,8 @@ bool StudentAbsenceModel::removeRows(int row, int count, const QModelIndex &pare
         studentEntryList.removeAt(row);
     }
 
+    studentEntryList.clear();
+
     endRemoveRows();
     return true;
 }
@@ -149,6 +167,19 @@ Qt::ItemFlags StudentAbsenceModel::flags(const QModelIndex &index) const
         return Qt::ItemIsEnabled;
 
     return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+}
+
+qint64 StudentAbsenceModel::entriesSize() const
+{
+    return studentEntryList.size();
+}
+
+void StudentAbsenceModel::addEntry(const StudentEntry &entry)
+{
+    beginInsertRows(QModelIndex(), studentEntryList.size(), studentEntryList.size());
+    studentEntryList.append(entry);
+    endInsertRows();
+
 }
 
 void StudentAbsenceModel::createHorizontalHeader()
@@ -178,22 +209,32 @@ void StudentAbsenceModel::createHorizontalHeader()
     horizontalHeader->setItem(0, 2, absence_root_item);
 }
 
-StudentAbsenceModel::RussianFullName::RussianFullName()
+
+
+RussianFullName::RussianFullName()
     : surname(""),
       name(""),
-      patronimic(""){}
+      patronymic(""){}
 
-StudentAbsenceModel::RussianFullName::RussianFullName(QString s_, QString n_, QString p_)
+RussianFullName::RussianFullName(QString s_, QString n_, QString p_)
     : surname(s_),
       name(n_),
-      patronimic(p_){}
+      patronymic(p_){}
 
-QString StudentAbsenceModel::RussianFullName::getFullName() const
+RussianFullName &RussianFullName::operator=(const RussianFullName & anotherName)
 {
-    return surname + " " + name + " " + patronimic;
+    surname = anotherName.surname;
+    name = anotherName.name;
+    patronymic = anotherName.patronymic;
+    return *this;
 }
 
-bool StudentAbsenceModel::RussianFullName::setFullName(QString fullName)
+QString RussianFullName::getFullName() const
+{
+    return surname + " " + name + " " + patronymic;
+}
+
+bool RussianFullName::setFullName(QString fullName)
 {
     QStringList list = fullName.split(" ");
 
@@ -202,74 +243,76 @@ bool StudentAbsenceModel::RussianFullName::setFullName(QString fullName)
 
     surname = list[0];
     name = list[1];
-    patronimic = list[2];
+    patronymic = list[2];
     return true;
 }
 
-QString StudentAbsenceModel::RussianFullName::getSurname() const
+QString RussianFullName::getSurname() const
 {
     return surname;
 }
 
-void StudentAbsenceModel::RussianFullName::setSurname(const QString &value)
+void RussianFullName::setSurname(const QString &value)
 {
     surname = value;
 }
 
-QString StudentAbsenceModel::RussianFullName::getName() const
+QString RussianFullName::getName() const
 {
     return name;
 }
 
-void StudentAbsenceModel::RussianFullName::setName(const QString &value)
+void RussianFullName::setName(const QString &value)
 {
     name = value;
 }
 
-QString StudentAbsenceModel::RussianFullName::getPatronimic() const
+QString RussianFullName::getPatronimic() const
 {
-    return patronimic;
+    return patronymic;
 }
 
-void StudentAbsenceModel::RussianFullName::setPatronimic(const QString &value)
+void RussianFullName::setPatronimic(const QString &value)
 {
-    patronimic = value;
+    patronymic = value;
 }
 
 
 
-qint8 StudentAbsenceModel::Group::numLetters = 6;
+qint8 Group::numLetters = 6;
 
-StudentAbsenceModel::Group::Group(QString val)
+Group::Group(QString val)
 {
-    if(numLetters != val.length())
-        throw GroupNumLettersException();
     value = val;
 }
 
-QString StudentAbsenceModel::Group::getValue() const
+Group &Group::operator=(const Group &anotherGroup)
+{
+    value = anotherGroup.value;
+    return *this;
+}
+
+QString Group::getValue() const
 {
     return value;
 }
 
-void StudentAbsenceModel::Group::setValue(const QString &val)
+void Group::setValue(const QString &val)
 {
-    if(numLetters != val.length() || !isNumber(val))
-        throw GroupNumLettersException();
     value = val;
 }
 
-qint8 StudentAbsenceModel::Group::getNumLetters()
+qint8 Group::getNumLetters()
 {
     return numLetters;
 }
 
-void StudentAbsenceModel::Group::setNumLetters(const qint8 &value)
+void Group::setNumLetters(const qint8 &value)
 {
     numLetters = value;
 }
 
-bool StudentAbsenceModel::Group::isNumber(const QString & source) const
+bool Group::isNumber(const QString & source) const
 {
     QRegExp numberExp("[0-9]{" + QString::number(numLetters) + "}");
     return numberExp.indexIn(source) != 1;
@@ -277,65 +320,67 @@ bool StudentAbsenceModel::Group::isNumber(const QString & source) const
 
 
 
-StudentAbsenceModel::Absence::Absence()
+Absence::Absence()
     : illness(0),
       another(0),
       hooky(0) {}
 
-StudentAbsenceModel::Absence::Absence(qint16 illness_, qint16 another_, qint16 hooky_)
+Absence::Absence(qint16 illness_, qint16 another_, qint16 hooky_)
     : illness(illness_),
       another(another_),
       hooky(hooky_){}
 
-qint16 StudentAbsenceModel::Absence::getIllness() const
+Absence &Absence::operator=(const Absence &anotherAbsence)
+{
+    illness = anotherAbsence.illness;
+    another = anotherAbsence.another;
+    hooky = anotherAbsence.hooky;
+    return *this;
+}
+
+qint16 Absence::getIllness() const
 {
     return illness;
 }
 
-void StudentAbsenceModel::Absence::setIllness(qint16 value)
+void Absence::setIllness(qint16 value)
 {
-    if(value < 0)
-        throw AbsenceNumOutOfRangeExceprion();
     illness = value;
 }
 
-qint16 StudentAbsenceModel::Absence::getAnother() const
+qint16 Absence::getAnother() const
 {
     return another;
 }
 
-void StudentAbsenceModel::Absence::setAnother(qint16 value)
+void Absence::setAnother(qint16 value)
 {
-    if(value < 0)
-        throw AbsenceNumOutOfRangeExceprion();
     another = value;
 }
 
-qint16 StudentAbsenceModel::Absence::getHooky() const
+qint16 Absence::getHooky() const
 {
     return hooky;
 }
 
-void StudentAbsenceModel::Absence::setHooky(qint16 value)
+void Absence::setHooky(qint16 value)
 {
-    if(value < 0)
-        throw AbsenceNumOutOfRangeExceprion();
     hooky = value;
 }
 
-qint16 StudentAbsenceModel::Absence::getTotal() const
+qint16 Absence::getTotal() const
 {
     return illness + another + hooky;
 }
 
 
 
-StudentAbsenceModel::StudentEntry::StudentEntry()
+StudentEntry::StudentEntry()
     : name(), group(), absence()
 {}
 
-StudentAbsenceModel::StudentEntry::StudentEntry(const StudentAbsenceModel::RussianFullName &n_,
-        const QString &gr_,
-        const StudentAbsenceModel::Absence &abs_)
+StudentEntry::StudentEntry(const RussianFullName &n_,
+        const Group &gr_,
+        const Absence &abs_)
     : name(n_), group(gr_), absence(abs_)
 {}

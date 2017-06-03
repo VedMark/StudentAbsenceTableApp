@@ -1,11 +1,16 @@
 #include "studentabsencedialogapp.h"
 
+#include <QContextMenuEvent>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QStatusBar>
+#include <QToolBar>
+
 StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     : QMainWindow(parent)
 {
     view = new QTableView(this);
-
-    view->setModel(source = new StudentAbsenceModel(this));
+    view->setModel(model = new StudentAbsenceModel(this));
 
     header = new HierarchicalHeaderView(Qt::Horizontal, view);
     header->setHighlightSections(true);
@@ -14,12 +19,29 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     view->setHorizontalHeader(header);
 
     setCentralWidget(view);
+
+    controller = new ModelController(model);
+
+    addDialog = Q_NULLPTR;
+
+    createToolBar();
+    createMenu();
+    createContextMenu();
+    setConnections();
+
+    setStatusBar(new QStatusBar(this));
+
     resize(maximumSize());
 }
 
 StudentAbsenceTableApp::~StudentAbsenceTableApp()
 {
 
+}
+
+void StudentAbsenceTableApp::contextMenuEvent(QContextMenuEvent *mouse_pointer)
+{
+    contextMenu->exec(mouse_pointer->globalPos());
 }
 
 void StudentAbsenceTableApp::closeEvent(QCloseEvent *)
@@ -35,4 +57,212 @@ void StudentAbsenceTableApp::resizeEvent(QResizeEvent *)
     view->setColumnWidth(3, width() / 8);
     view->setColumnWidth(4, width() / 6);
     view->setColumnWidth(5, width() / 12);
+}
+
+bool StudentAbsenceTableApp::newFile()
+{
+    if(agreedToContinue()){
+        controller->clearModel();
+        setCurrentFileName("");
+        return true;
+    }
+    return false;
+}
+
+bool StudentAbsenceTableApp::open()
+{
+    if(agreedToContinue()){
+        QString openFileName = QFileDialog::getOpenFileName(this,
+                                                tr("Открыть файл"), "/home/vedmark",
+                                                tr("Файл данных (*.xml)"));
+        if(!openFileName.isEmpty())
+            return loadFile(openFileName);
+
+    }
+    return false;
+}
+
+bool StudentAbsenceTableApp::save()
+{
+    if(currentFileName.isEmpty())
+        return saveAs();
+    else
+        return saveFile(currentFileName);
+}
+
+bool StudentAbsenceTableApp::saveAs()
+{
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                tr("Сохранить файл"), "/home/vedmark",
+                                                tr("Файл данных (*.xml)"));
+    if(fileName.isEmpty())
+        return false;
+    if(!fileName.endsWith(".xml"))
+        fileName += ".xml";
+    return saveFile(fileName);
+}
+
+bool StudentAbsenceTableApp::addEntry()
+{
+    if(addDialog != Q_NULLPTR)
+        delete addDialog;
+    addDialog = new AddDialog(model, this);
+
+    addDialog->show();
+    addDialog->raise();
+    addDialog->activateWindow();
+    return true;
+}
+
+bool StudentAbsenceTableApp::findEntry()
+{
+
+}
+
+bool StudentAbsenceTableApp::removeEntry()
+{
+
+}
+
+bool StudentAbsenceTableApp::showPrevPage()
+{
+    return true;
+}
+
+bool StudentAbsenceTableApp::showNextPage()
+{
+    return true;
+}
+
+
+bool StudentAbsenceTableApp::loadFile(const QString &fileName)
+{
+    try
+    {
+        //textField->setText(fileRecorder.read(fileName, defaultFont));
+
+        //textField->setCurrentPos(QPoint(0, 0));
+        setCurrentFileName(fileName);
+        statusBar()->showMessage(tr("Файл загружен"), 2000);
+    }
+    catch(FileException &)
+    {
+        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+        return false;
+    }
+
+    return true;
+}
+
+bool StudentAbsenceTableApp::saveFile(const QString &fileName)
+{
+    try
+    {
+        //textField->setText(fileRecorder.read(fileName, defaultFont));
+
+        //textField->setCurrentPos(QPoint(0, 0));
+        setCurrentFileName(fileName);
+        statusBar()->showMessage(tr("Файл сохранён"), 2000);
+    }
+    catch(FileException &)
+    {
+        statusBar()->showMessage(tr("Сохранение отменено"), 2000);
+        return false;
+    }
+
+    return true;
+}
+
+bool StudentAbsenceTableApp::agreedToContinue()
+{
+    //if (!textEdit.document()->isModified())
+    //     return true;
+    QMessageBox::StandardButton answer = QMessageBox::warning(
+                this,
+                tr("Документ был изменён"),
+                tr("Сохранить изменения?"),
+                QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+
+    if (answer == QMessageBox::Save)
+        return save();
+    else if (answer == QMessageBox::Cancel)
+        return false;
+    return true;
+}
+
+void StudentAbsenceTableApp::setCurrentFileName(const QString &fileName)
+{
+    currentFileName = fileName;
+}
+
+void StudentAbsenceTableApp::createToolBar()
+{
+    toolBar = new QToolBar(this);
+
+    toolBar->addAction(MenuComponents::instance().addEntries);
+    toolBar->addAction(MenuComponents::instance().findEntries);
+    toolBar->addAction(MenuComponents::instance().removeEntries);
+
+    toolBar->addSeparator();
+
+    toolBar->addAction(MenuComponents::instance().prevPage);
+    toolBar->addAction(MenuComponents::instance().nextPage);
+
+    addToolBar(toolBar);
+}
+
+void StudentAbsenceTableApp::createMenu()
+{
+    menuBar = new QMenuBar(this);
+
+    QMenu *fileMenu = new QMenu(tr("file"), menuBar);
+    fileMenu->addAction(MenuComponents::instance().newTable);
+    fileMenu->addAction(MenuComponents::instance().openTable);
+    fileMenu->addAction(MenuComponents::instance().saveTable);
+    fileMenu->addAction(MenuComponents::instance().saveAsTable);
+    fileMenu->addSeparator();
+    fileMenu->addAction(MenuComponents::instance().exitApp);
+    menuBar->addMenu(fileMenu);
+
+    QMenu *editMenu = new QMenu(tr("edit"), menuBar);
+    editMenu->addAction(MenuComponents::instance().addEntries);
+    editMenu->addAction(MenuComponents::instance().findEntries);
+    editMenu->addAction(MenuComponents::instance().removeEntries);
+    editMenu->addSeparator();
+    editMenu->addAction(MenuComponents::instance().prevPage);
+    editMenu->addAction(MenuComponents::instance().nextPage);
+
+    menuBar->addMenu(editMenu);
+
+    setMenuBar(menuBar);
+}
+
+void StudentAbsenceTableApp::createContextMenu()
+{
+    contextMenu = new QMenu(this);
+
+    contextMenu->addAction(MenuComponents::instance().addEntries);
+    contextMenu->addAction(MenuComponents::instance().findEntries);
+    contextMenu->addAction(MenuComponents::instance().removeEntries);
+
+    contextMenu->addSeparator();
+
+    contextMenu->addAction(MenuComponents::instance().prevPage);
+    contextMenu->addAction(MenuComponents::instance().nextPage);
+}
+
+void StudentAbsenceTableApp::setConnections()
+{
+    connect(MenuComponents::instance().newTable, SIGNAL( triggered(bool) ), SLOT( newFile() ) );
+    connect(MenuComponents::instance().openTable, SIGNAL( triggered(bool) ), SLOT( open() ) );
+    connect(MenuComponents::instance().saveTable, SIGNAL( triggered(bool) ), SLOT( save() ) );
+    connect(MenuComponents::instance().saveAsTable, SIGNAL( triggered(bool) ), SLOT( saveAs() ) );
+    connect(MenuComponents::instance().exitApp, SIGNAL( triggered(bool) ), SLOT( close() ) );
+
+    connect(MenuComponents::instance().addEntries, SIGNAL( triggered(bool) ), SLOT( addEntry() ) );
+    connect(MenuComponents::instance().findEntries, SIGNAL( triggered(bool) ), SLOT( findEntry() ) );
+    connect(MenuComponents::instance().removeEntries, SIGNAL( triggered(bool) ), SLOT( removeEntry() ) );
+
+    connect(MenuComponents::instance().prevPage, SIGNAL( triggered(bool) ), SLOT( showPrevPage() ) );
+    connect(MenuComponents::instance().nextPage, SIGNAL( triggered(bool) ), SLOT( showNextPage() ) );
 }

@@ -1,0 +1,15 @@
+<RCC>
+<qresource>
+	<file>images/new.png</file>
+	<file>images/open.png</file>
+	<file>images/save.png</file>
+	<file>images/exit.png</file>
+
+	<file>images/addEntries.png</file>
+	<file>images/findEntries.png</file>
+	<file>images/removeEntries.png</file>
+
+	<file>images/prevPage.png</file>
+	<file>images/nextPage.png</file>
+</qresource>
+</RCC>

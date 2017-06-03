@@ -15,11 +15,19 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-    view/studentabsencedialogapp.cpp \
+    model/studentabsencemodel.cpp \
     view/HierarchicalHeaderView.cpp \
-    model/studentabsencemodel.cpp
+    view/studentabsencedialogapp.cpp \
+    controller/adddialog.cpp \
+    controller/modelcontroller.cpp \
+    controller/menucomponents.cpp
 
 HEADERS  += \
-    view/studentabsencedialogapp.h \
+    model/studentabsencemodel.h \
     view/HierarchicalHeaderView.h \
-    model/studentabsencemodel.h
+    view/studentabsencedialogapp.h \
+    controller/adddialog.h \
+    controller/modelcontroller.h \
+    controller/menucomponents.h
+
+RESOURCES += icons.qrc

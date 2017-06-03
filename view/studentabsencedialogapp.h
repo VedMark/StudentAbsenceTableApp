@@ -1,17 +1,24 @@
 #ifndef QTABLE_H
 #define QTABLE_H
 
-#include <QHeaderView>
-#include <QVBoxLayout>
-#include <QMainWindow>
-#include <QTableWidget>
-#include <QTableWidget>
-#include <QAbstractItemModel>
-#include <QLineEdit>
+
 #include <QLabel>
+#include <QLineEdit>
+#include <QVBoxLayout>
+
+#include <QMainWindow>
+#include <QMenu>
+#include <QMenuBar>
+#include <QToolBar>
+#include <QTableView>
 
 #include "HierarchicalHeaderView.h"
+#include "../controller/adddialog.h"
+#include "../controller/menucomponents.h"
+#include "../controller/modelcontroller.h"
 #include "../model/studentabsencemodel.h"
+
+class FileException{};
 
 class StudentAbsenceTableApp : public QMainWindow
 {
@@ -22,19 +29,47 @@ public:
     ~StudentAbsenceTableApp();
 
 protected:
+    void contextMenuEvent(QContextMenuEvent *);
     void closeEvent(QCloseEvent *);
     void resizeEvent(QResizeEvent *);
 
 private slots:
-//    void newFile();
-//    void open();
-//    bool save();
-//    bool saveAs();
+    bool newFile();
+    bool open();
+    bool save();
+    bool saveAs();
+
+    bool addEntry();
+    bool findEntry();
+    bool removeEntry();
+
+    bool showPrevPage();
+    bool showNextPage();
 
 private:
-    HierarchicalHeaderView *header;
-    StudentAbsenceModel *source;
+    bool loadFile(const QString &fileName);
+    bool saveFile(const QString &fileName);
+    bool agreedToContinue();
+    void setCurrentFileName(const QString &fileName);
+
+    void createToolBar();
+    void createMenu();
+    void createContextMenu();
+    void setConnections();
+
+
+    ModelController *controller;
+    StudentAbsenceModel *model;
     QTableView *view;
+    HierarchicalHeaderView *header;
+
+    QMenuBar *menuBar;
+    QMenu *contextMenu;
+    QToolBar *toolBar;
+
+    QString currentFileName;
+
+    AddDialog *addDialog;
 };
 
 #endif // QTABLE_H
