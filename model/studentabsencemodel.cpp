@@ -1,7 +1,7 @@
-#include "studentabsencemodel.h"
-
 #include <QtCore>
 #include <QtAlgorithms>
+
+#include "studentabsencemodel.h"
 
 StudentAbsenceModel::StudentAbsenceModel(QObject *parent)
     : QAbstractTableModel(parent)

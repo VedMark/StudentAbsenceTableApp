@@ -4,19 +4,16 @@
 
 #include <QLabel>
 #include <QLineEdit>
-#include <QVBoxLayout>
-
 #include <QMainWindow>
 #include <QMenu>
 #include <QMenuBar>
 #include <QToolBar>
 #include <QTableView>
 
-#include "HierarchicalHeaderView.h"
-#include "../controller/adddialog.h"
-#include "../controller/menucomponents.h"
-#include "../controller/modelcontroller.h"
 #include "../model/studentabsencemodel.h"
+#include "../view/studenttableview.h"
+#include "../controller/adddialog.h"
+#include "../controller/modelcontroller.h"
 
 class FileException{};
 
@@ -38,9 +35,6 @@ protected:
     bool agreedToContinue();
     void setCurrentFileName(const QString &fileName);
 
-signals:
-    void indexerChanged();
-
 protected slots:
     bool newFile();
     bool open();
@@ -51,24 +45,15 @@ protected slots:
     bool findEntry();
     bool removeEntry();
 
-    bool showPrevPage();
-    bool showNextPage();
-    void enablePrevPage();
-    void enableNextPage();
-    void changePageIndexer(qint8);
-
 private:
     void createToolBar();
     void createMenu();
     void createContextMenu();
     void setConnections();
 
-    static qint8 ENTRIES_PER_PAGE;
-
     ModelController *controller;
     StudentAbsenceModel *model;
-    QTableView *view;
-    HierarchicalHeaderView *header;
+    StudentTableView *view;
 
     QMenuBar *menuBar;
     QMenu *contextMenu;
@@ -78,8 +63,6 @@ private:
 
 
     AddDialog *addDialog;
-
-    qint64 pageIndexer;
 };
 
 #endif // QTABLE_H

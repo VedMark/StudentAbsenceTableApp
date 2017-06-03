@@ -3,8 +3,6 @@
 
 #include <QtCore>
 
-#include <QException>
-
 class StudentAbsenceModel;
 
 

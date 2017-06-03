@@ -1,8 +1,8 @@
-#include "adddialog.h"
-
 #include <QLayout>
 #include <QMessageBox>
 #include <QGraphicsColorizeEffect>
+
+#include "adddialog.h"
 
 AddDialog::AddDialog(StudentAbsenceModel *model_, QWidget *parent)
     :QDialog(parent)

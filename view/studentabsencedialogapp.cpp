@@ -1,5 +1,3 @@
-#include "studentabsencedialogapp.h"
-
 #include <QContextMenuEvent>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -7,22 +5,16 @@
 #include <QStatusBar>
 #include <QToolBar>
 
-qint8 StudentAbsenceTableApp::ENTRIES_PER_PAGE = 20;
+#include "studentabsencedialogapp.h"
+#include "../controller/menucomponents.h"
 
 StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     : QMainWindow(parent)
 {
-    view = new QTableView(this);
-    view->setModel(model = new StudentAbsenceModel(this));
-    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    model = new StudentAbsenceModel(this);
 
-    header = new HierarchicalHeaderView(Qt::Horizontal, view);
-    header->setHighlightSections(true);
-    header->setSectionResizeMode(QHeaderView::Fixed);
-    header->setStretchLastSection(true);
-    view->setHorizontalHeader(header);
-
+    view = new StudentTableView(this);
+    view->setModel(model);
     setCentralWidget(view);
 
     controller = new ModelController(model);
@@ -35,10 +27,9 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
 
     setStatusBar(new QStatusBar(this));
 
-    pageIndexer = 0;
-    changePageIndexer(0);
-
     setConnections();
+
+    view->show();
 
     setMinimumSize(800, 600);
     resize(maximumSize());
@@ -132,41 +123,6 @@ bool StudentAbsenceTableApp::removeEntry()
 {
 
 }
-
-bool StudentAbsenceTableApp::showPrevPage()
-{
-    changePageIndexer(-1);
-
-
-    return true;
-}
-
-bool StudentAbsenceTableApp::showNextPage()
-{
-    changePageIndexer(1);
-
-    return true;
-}
-
-void StudentAbsenceTableApp::enablePrevPage()
-{
-    MenuComponents::instance().prevPage->setEnabled(pageIndexer);
-}
-
-void StudentAbsenceTableApp::enableNextPage()
-{
-    MenuComponents::instance().nextPage->setEnabled(
-                        pageIndexer < static_cast<int>(model->entriesSize() / ENTRIES_PER_PAGE));
-}
-
-void StudentAbsenceTableApp::changePageIndexer(qint8 value)
-{
-    qint64 nextPage = pageIndexer + value;
-    qint64 maxNumPages = static_cast<int>(model->entriesSize() / ENTRIES_PER_PAGE);
-    pageIndexer = nextPage <= 0 ? 0 : nextPage > maxNumPages ? maxNumPages : nextPage;
-    emit indexerChanged();
-}
-
 
 bool StudentAbsenceTableApp::loadFile(const QString &fileName)
 {
@@ -298,18 +254,7 @@ void StudentAbsenceTableApp::setConnections()
     connect(MenuComponents::instance().findEntries, SIGNAL( triggered(bool) ), SLOT( findEntry() ) );
     connect(MenuComponents::instance().removeEntries, SIGNAL( triggered(bool) ), SLOT( removeEntry() ) );
 
-    connect(MenuComponents::instance().prevPage, SIGNAL( triggered(bool) ), SLOT( showPrevPage() ) );
-    connect(MenuComponents::instance().nextPage, SIGNAL( triggered(bool) ), SLOT( showNextPage() ) );
-
-    connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>) ),SLOT( enableNextPage() ) );
-
-    connect(
-        this, &StudentAbsenceTableApp::indexerChanged,
-        [this] () { enablePrevPage(); }
-    );
-
-    connect(
-        this, &StudentAbsenceTableApp::indexerChanged,
-        [this] () { enableNextPage(); }
-    );
+    connect(MenuComponents::instance().prevPage, SIGNAL( triggered(bool) ), view, SLOT( showPrevPage() ) );
+    connect(MenuComponents::instance().nextPage, SIGNAL( triggered(bool) ), view, SLOT( showNextPage() ) );
+    connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>) ), view, SLOT( enableNextPage() ) );
 }

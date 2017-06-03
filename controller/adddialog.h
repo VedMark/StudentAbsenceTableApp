@@ -6,8 +6,8 @@
 #include <QLineEdit>
 #include <QPushButton>
 
-#include "../controller/modelcontroller.h"
 #include "../model/studentabsencemodel.h"
+#include "../controller/modelcontroller.h"
 
 
 class AddDialog : public QDialog
