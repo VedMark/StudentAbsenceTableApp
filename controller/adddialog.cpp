@@ -4,7 +4,7 @@
 #include <QMessageBox>
 #include <QGraphicsColorizeEffect>
 
-AddDialog::AddDialog(QAbstractTableModel *model_, QWidget *parent)
+AddDialog::AddDialog(StudentAbsenceModel *model_, QWidget *parent)
     :QDialog(parent)
 {
     model = model_;
@@ -43,35 +43,30 @@ AddDialog::AddDialog(QAbstractTableModel *model_, QWidget *parent)
     addLayouts();
 }
 
-StudentEntry *AddDialog::createEntry()
+void AddDialog::createEntry()
 {
-    StudentEntry *entry;
-
     if(verifyEdits())
     {
-        RussianFullName *fullName;
-        Group *group;
-        Absence *absence;
+        model->insertRow(model->entriesSize());
 
-        fullName = new RussianFullName(
-                    surnameEdt->text(),
-                    nameEdt->text(),
-                    patronymicEdt->text());
-
-        group = new Group(groupEdt->text());
-
-        absence = new Absence(
-                    illnessEdt->text().toInt(),
-                    anotherEdt->text().toInt(),
-                    hookyEdt->text().toInt());
-
-        entry = new StudentEntry(*fullName, *group, *absence);
-        emit entryCreated(*entry);
+        model->setData(
+                    model->index(model->entriesSize() - 1, StudentAbsenceModel::NAME, QModelIndex()),
+                    QVariant(surnameEdt->text() + " " + nameEdt->text() + " " + patronymicEdt->text()), Qt::EditRole);
+        model->setData(
+                    model->index(model->entriesSize() - 1, StudentAbsenceModel::GROUP, QModelIndex()),
+                    QVariant(groupEdt->text()), Qt::EditRole);
+        model->setData(
+                    model->index(model->entriesSize() - 1, StudentAbsenceModel::ILLNESS, QModelIndex()),
+                    QVariant(illnessEdt->text().toInt()), Qt::EditRole);
+        model->setData(
+                    model->index(model->entriesSize() - 1, StudentAbsenceModel::ANOTHER, QModelIndex()),
+                    QVariant(anotherEdt->text().toInt()), Qt::EditRole);
+        model->setData(
+                    model->index(model->entriesSize() - 1, StudentAbsenceModel::HOOKY, QModelIndex()),
+                    QVariant(hookyEdt->text().toInt()), Qt::EditRole);
     }
     else
         QMessageBox::information(this, "Внимание!", "Введены ошибочные данные!", QMessageBox::Ok);
-
-    return entry;
 }
 
 void AddDialog::changeNumFilledEdits()
@@ -93,15 +88,17 @@ void AddDialog::enableFindButton(bool isMax)
 
 void AddDialog::connectLineEdits()
 {
-    foreach (const QLineEdit* edt, listEdits) {
+    foreach (QLineEdit* edt, listEdits) {
         connect(edt, SIGNAL( textChanged(const QString &) ), SLOT( changeNumFilledEdits() ) );
-        //connect(edt, SIGNAL( textChanged(const QString &) ), SLOT( removeEffect() );
+        connect(
+            edt, &QLineEdit::textChanged,
+            [=] () { edt->setGraphicsEffect(Q_NULLPTR); }
+        );
     }
 
     connect(this, SIGNAL( numFilledEditsChanged(bool) ), SLOT( enableFindButton(bool) ) );
 
     connect(findBtn,  SIGNAL( clicked(bool) ), SLOT( createEntry() ) );
-    connect(this, SIGNAL( entryCreated(const StudentEntry&) ), model, SLOT( addEntry(const StudentEntry&) ) );
 
     connect(closeBtn, SIGNAL( clicked(bool) ), SLOT( close() ) );
 }

@@ -33,7 +33,15 @@ protected:
     void closeEvent(QCloseEvent *);
     void resizeEvent(QResizeEvent *);
 
-private slots:
+    bool loadFile(const QString &fileName);
+    bool saveFile(const QString &fileName);
+    bool agreedToContinue();
+    void setCurrentFileName(const QString &fileName);
+
+signals:
+    void indexerChanged();
+
+protected slots:
     bool newFile();
     bool open();
     bool save();
@@ -45,18 +53,17 @@ private slots:
 
     bool showPrevPage();
     bool showNextPage();
+    void enablePrevPage();
+    void enableNextPage();
+    void changePageIndexer(qint8);
 
 private:
-    bool loadFile(const QString &fileName);
-    bool saveFile(const QString &fileName);
-    bool agreedToContinue();
-    void setCurrentFileName(const QString &fileName);
-
     void createToolBar();
     void createMenu();
     void createContextMenu();
     void setConnections();
 
+    static qint8 ENTRIES_PER_PAGE;
 
     ModelController *controller;
     StudentAbsenceModel *model;
@@ -69,7 +76,10 @@ private:
 
     QString currentFileName;
 
+
     AddDialog *addDialog;
+
+    qint64 pageIndexer;
 };
 
 #endif // QTABLE_H

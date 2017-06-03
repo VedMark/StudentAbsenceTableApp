@@ -15,14 +15,14 @@ class AddDialog : public QDialog
     Q_OBJECT
 
 public:
-    AddDialog(QAbstractTableModel *model, QWidget *parent = Q_NULLPTR);
+    AddDialog(StudentAbsenceModel *model, QWidget *parent = Q_NULLPTR);
 
 signals:
     void entryCreated(const StudentEntry&);
     void numFilledEditsChanged(bool);
 
 private slots:
-    StudentEntry *createEntry();
+    void createEntry();
     void changeNumFilledEdits();
     void enableFindButton(bool);
 
@@ -39,7 +39,7 @@ private:
 
     const qint8 MAX_NUM_FILLED_EDITS = 7;
 
-    QAbstractTableModel *model;
+    StudentAbsenceModel *model;
 
     QPushButton *findBtn;
     QPushButton *closeBtn;

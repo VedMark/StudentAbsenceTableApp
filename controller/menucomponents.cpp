@@ -6,9 +6,6 @@ MenuComponents &MenuComponents::instance()
 {
     static MenuComponents m_instance;
     return m_instance;
-    if(MenuComponents::p_instance == Q_NULLPTR)
-        MenuComponents::p_instance = new MenuComponents();
-    //return MenuComponents::p_instance;
 }
 
 MenuComponents::MenuComponents()

@@ -83,48 +83,29 @@ QVariant StudentAbsenceModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-bool StudentAbsenceModel::setData(const QModelIndex &index, const QVariant &value, int role)
+bool StudentAbsenceModel::setData(const QModelIndex &index_, const QVariant &value, int role)
 {
-    if(index.isValid() && role == Qt::EditRole)
+    if(index_.isValid() && role == Qt::EditRole)
     {
-        try
+        switch(index_.column())
         {
-            bool *ok = new bool;
-            int int_value = 0;
-
-            switch(index.column())
-            {
-            case NAME:
-
-                studentEntryList[index.row()].name.setFullName(value.toString());
-                break;
-            case GROUP:
-                studentEntryList[index.row()].group.setValue(value.toString());
-                break;
-            case ILLNESS:
-                int_value = value.toInt(ok);
-                if(*ok)
-                    studentEntryList[index.row()].absence.setIllness(int_value);
-                break;
-            case ANOTHER:
-                int_value = value.toInt(ok);
-                if(*ok)
-                    studentEntryList[index.row()].absence.setAnother(int_value);
-                break;
-            case HOOKY:
-                int_value = value.toInt(ok);
-                if(*ok)
-
-                    studentEntryList[index.row()].absence.setHooky(int_value);;
-                break;
-            }
-
-            delete ok;
+        case NAME:
+            studentEntryList[index_.row()].name.setFullName(value.toString());
+            break;
+        case GROUP:
+            studentEntryList[index_.row()].group.setValue(value.toString());
+            break;
+        case ILLNESS:
+                studentEntryList[index_.row()].absence.setIllness(value.toInt());
+            break;
+        case ANOTHER:
+                studentEntryList[index_.row()].absence.setAnother(value.toInt());
+            break;
+        case HOOKY:
+                studentEntryList[index_.row()].absence.setHooky(value.toInt());;
+            break;
         }
-        catch(...)
-        {
-            return false;
-        }
+        emit dataChanged(index_, index_);
         return true;
     }
     return false;
@@ -133,7 +114,7 @@ bool StudentAbsenceModel::setData(const QModelIndex &index, const QVariant &valu
 bool StudentAbsenceModel::insertRows(int row, int count, const QModelIndex &parent)
 {
     Q_UNUSED(parent);
-    beginInsertRows(QModelIndex(), row, row + count);
+    beginInsertRows(QModelIndex(), row, row + count - 1);
 
     for(int i = 0; i < count; ++i)
     {
@@ -172,14 +153,6 @@ Qt::ItemFlags StudentAbsenceModel::flags(const QModelIndex &index) const
 qint64 StudentAbsenceModel::entriesSize() const
 {
     return studentEntryList.size();
-}
-
-void StudentAbsenceModel::addEntry(const StudentEntry &entry)
-{
-    beginInsertRows(QModelIndex(), studentEntryList.size(), studentEntryList.size());
-    studentEntryList.append(entry);
-    endInsertRows();
-
 }
 
 void StudentAbsenceModel::createHorizontalHeader()

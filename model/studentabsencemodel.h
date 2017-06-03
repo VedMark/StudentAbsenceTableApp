@@ -14,6 +14,15 @@ class StudentAbsenceModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
+    enum Column{
+        NAME,
+        GROUP,
+        ILLNESS,
+        ANOTHER,
+        HOOKY,
+        TOTAL,
+        LAST
+    };
 
     explicit StudentAbsenceModel(QObject *parent = 0);
 
@@ -37,23 +46,7 @@ public:
 
     qint64 entriesSize() const;
 
-
-public slots:
-    void addEntry(const StudentEntry&);
-
-
 private:
-
-    enum Column{
-        NAME,
-        GROUP,
-        ILLNESS,
-        ANOTHER,
-        HOOKY,
-        TOTAL,
-        LAST
-    };
-
 
     void createHorizontalHeader();
 
