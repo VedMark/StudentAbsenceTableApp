@@ -2,6 +2,7 @@
 
 #include <QLayout>
 #include <QMessageBox>
+#include <QGraphicsColorizeEffect>
 
 AddDialog::AddDialog(QAbstractTableModel *model_, QWidget *parent)
     :QDialog(parent)
@@ -23,6 +24,7 @@ AddDialog::AddDialog(QAbstractTableModel *model_, QWidget *parent)
 
     surnameEdt      = new QLineEdit(this);
     nameEdt         = new QLineEdit(this);
+
     patronymicEdt   = new QLineEdit(this);
     groupEdt        = new QLineEdit(this);
     illnessEdt      = new QLineEdit(this);
@@ -93,6 +95,7 @@ void AddDialog::connectLineEdits()
 {
     foreach (const QLineEdit* edt, listEdits) {
         connect(edt, SIGNAL( textChanged(const QString &) ), SLOT( changeNumFilledEdits() ) );
+        //connect(edt, SIGNAL( textChanged(const QString &) ), SLOT( removeEffect() );
     }
 
     connect(this, SIGNAL( numFilledEditsChanged(bool) ), SLOT( enableFindButton(bool) ) );
@@ -158,6 +161,13 @@ void AddDialog::addLayouts()
     setLayout(mainLayout);
 }
 
+void AddDialog::addEffect(QWidget *widget)
+{
+    QGraphicsColorizeEffect *effect = new QGraphicsColorizeEffect(widget);
+    effect->setColor(QColor(250, 0, 0));
+    widget->setGraphicsEffect(effect);
+}
+
 bool AddDialog::isName(const QString& text) const
 {
     foreach (QChar ch, text) {
@@ -173,43 +183,43 @@ bool AddDialog::verifyEdits()
 
     bool *ok = new bool;
 
-    if(!isName(surnameEdt->text())){
-        surnameEdt->setText("");
+    if(!isName(surnameEdt->text()) || !surnameEdt->text().at(0).isUpper()){
+        addEffect(surnameEdt);
         isCorrect = false;
     }
 
-    if(!isName(nameEdt->text())){
-        nameEdt->setText("");
+    if(!isName(nameEdt->text()) || !nameEdt->text().at(0).isUpper()){
+        addEffect(nameEdt);
         isCorrect = false;
     }
 
-    if(!isName(patronymicEdt->text())){
-        patronymicEdt->setText("");
+    if(!isName(patronymicEdt->text()) || !patronymicEdt->text().at(0).isUpper()){
+        addEffect(patronymicEdt);
         isCorrect = false;
     }
 
     long long num = groupEdt->text().toLongLong(ok);
     if(!(*ok) || num < 0 || groupEdt->text().length() != Group::getNumLetters()){
-        groupEdt->setText("");
+        addEffect(groupEdt);
         isCorrect = false;
     }
 
     num = illnessEdt->text().toLongLong(ok);
     if(!(*ok) || num < 0 || illnessEdt->text().length() > 7){
-        illnessEdt->setText("");
+        addEffect(illnessEdt);
         isCorrect = false;
     }
 
     num = anotherEdt->text().toLongLong(ok);
     anotherEdt->text().isSimpleText();
     if(!(*ok) || num < 0 || anotherEdt->text().length() > 7){
-        anotherEdt->setText("");
+        addEffect(anotherEdt);
         isCorrect = false;
     }
 
     num = hookyEdt->text().toLongLong(ok);
     if(!(*ok) || num < 0 || hookyEdt->text().length() > 7){
-        hookyEdt->setText("");
+        addEffect(hookyEdt);
         isCorrect = false;
     }
 

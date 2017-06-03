@@ -31,6 +31,9 @@ private:
     void setOrders();
     void addLayouts();
 
+    void addEffect(QWidget *widget);
+    void removeEffect();
+
     bool isName(const QString& text) const;
     bool verifyEdits();
 
