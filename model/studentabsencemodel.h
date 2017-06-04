@@ -26,13 +26,11 @@ public:
 
     explicit StudentAbsenceModel(QObject *parent = 0);
 
-    // Header:
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
     bool hasIndex(int row, int column, const QModelIndex &parent) const;
     QModelIndex index(int row, int column, const QModelIndex &parent) const override;
 
-    // Basic functionality:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
@@ -46,10 +44,11 @@ public:
 
     qint64 entriesSize() const;
 
+    const QList<StudentEntry> &getStudentEntryList() const;
+    void setStudentEntryList(const QList<StudentEntry> &value);
+
 private:
-
     void createHorizontalHeader();
-
 
     QList<StudentEntry> studentEntryList;
     QStandardItemModel *horizontalHeader;
@@ -66,6 +65,7 @@ private:
 public:
     explicit RussianFullName();
     explicit RussianFullName(QString surname_, QString name_, QString patronimic_);
+    RussianFullName(const RussianFullName&);
     RussianFullName &operator=(const RussianFullName&);
 
     QString getFullName() const;
@@ -88,7 +88,8 @@ class Group{
     static qint8 numLetters;
 
 public:
-    Group(QString val = QString("000000"));
+    explicit Group(QString val = QString("000000"));
+    Group(const Group&);
     Group &operator=(const Group&);
 
     QString getValue() const;
@@ -112,6 +113,7 @@ private:
 public:
     explicit Absence();
     explicit Absence(qint16 illness_, qint16 another_, qint16 hooky_);
+    Absence(const Absence&);
     Absence &operator=(const Absence&);
 
     qint16 getIllness() const;
@@ -135,6 +137,7 @@ struct StudentEntry{
 
     StudentEntry();
     StudentEntry(const RussianFullName&, const Group &group, const Absence&);
+    StudentEntry(const StudentEntry&);
 };
 
 #endif // STUDENTABSENCEMODEL_H

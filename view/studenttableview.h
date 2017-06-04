@@ -30,7 +30,7 @@ protected slots:
     void changePage(qint8);
 
 protected:
-    //void paintEvent(QPaintEvent *);
+    void paintEvent(QPaintEvent *);
 
 signals:
     void indexerChanged();

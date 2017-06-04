@@ -9,8 +9,8 @@ AddDialog::AddDialog(StudentAbsenceModel *model_, QWidget *parent)
 {
     model = model_;
 
-    findBtn         = new QPushButton("Добавить", this);
-    findBtn->setEnabled(false);
+    addBtn         = new QPushButton("Добавить", this);
+    addBtn->setEnabled(false);
     closeBtn        = new QPushButton("Закрыть", this);
 
     surnameLbl      = new QLabel(tr("Фамилия"), this);
@@ -31,6 +31,8 @@ AddDialog::AddDialog(StudentAbsenceModel *model_, QWidget *parent)
     anotherEdt      = new QLineEdit(this);
     hookyEdt        = new QLineEdit(this);
 
+    surnameEdt->setFocus();
+
     listEdits << surnameEdt << nameEdt << patronymicEdt << groupEdt
               << illnessEdt << anotherEdt << hookyEdt;
 
@@ -39,7 +41,6 @@ AddDialog::AddDialog(StudentAbsenceModel *model_, QWidget *parent)
     setMinimumSize(550, 200);
 
     connectLineEdits();
-    setOrders();
     addLayouts();
 }
 
@@ -66,7 +67,7 @@ void AddDialog::createEntry()
                     QVariant(hookyEdt->text().toInt()), Qt::EditRole);
     }
     else
-        QMessageBox::information(this, "Внимание!", "Введены ошибочные данные!", QMessageBox::Ok);
+        QMessageBox::information(this, "Внимание!", "Введены некорректные данные!", QMessageBox::Ok);
 }
 
 void AddDialog::changeNumFilledEdits()
@@ -74,46 +75,35 @@ void AddDialog::changeNumFilledEdits()
     int numFilledEdits = 0;
 
     foreach (const QLineEdit* edt, listEdits) {
-        if(!edt->text().isEmpty())
+        if(!edt->text().isEmpty() && edt->graphicsEffect() == Q_NULLPTR)
             numFilledEdits++;
     }
 
-    emit numFilledEditsChanged(numFilledEdits == MAX_NUM_FILLED_EDITS);
+    emit numFilledEditsChanged(numFilledEdits);
 }
 
-void AddDialog::enableFindButton(bool isMax)
+void AddDialog::enableAddButton(int num)
 {
-    findBtn->setEnabled(isMax);
+    addBtn->setEnabled(num == MAX_NUM_FILLED_EDITS);
 }
 
 void AddDialog::connectLineEdits()
 {
     foreach (QLineEdit* edt, listEdits) {
-        connect(edt, SIGNAL( textChanged(const QString &) ), SLOT( changeNumFilledEdits() ) );
         connect(
             edt, &QLineEdit::textChanged,
             [=] () { edt->setGraphicsEffect(Q_NULLPTR); }
         );
+        connect(edt, SIGNAL( textChanged(const QString &) ), SLOT( changeNumFilledEdits() ) );
     }
 
-    connect(this, SIGNAL( numFilledEditsChanged(bool) ), SLOT( enableFindButton(bool) ) );
+    connect(this, SIGNAL( numFilledEditsChanged(int) ), SLOT( enableAddButton(int) ) );
 
-    connect(findBtn,  SIGNAL( clicked(bool) ), SLOT( createEntry() ) );
+    connect(addBtn,  SIGNAL( clicked(bool) ), SLOT( createEntry() ) );
 
     connect(closeBtn, SIGNAL( clicked(bool) ), SLOT( close() ) );
 }
 
-void AddDialog::setOrders()
-{
-    setTabOrder(surnameEdt, nameEdt);
-    setTabOrder(nameEdt, patronymicEdt);
-    setTabOrder(patronymicEdt, groupEdt);
-    setTabOrder(groupEdt, illnessEdt);
-    setTabOrder(illnessEdt, anotherEdt);
-    setTabOrder(anotherEdt, hookyEdt);
-    setTabOrder(hookyEdt, findBtn);
-    surnameEdt->setFocus();
-}
 
 void AddDialog::addLayouts()
 {
@@ -147,7 +137,7 @@ void AddDialog::addLayouts()
 
     QHBoxLayout *bottomRightLayout = new QHBoxLayout;
     bottomRightLayout->addStretch(1);
-    bottomRightLayout->addWidget(findBtn);
+    bottomRightLayout->addWidget(addBtn);
     bottomRightLayout->addWidget(closeBtn);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
@@ -202,26 +192,24 @@ bool AddDialog::verifyEdits()
     }
 
     num = illnessEdt->text().toLongLong(ok);
-    if(!(*ok) || num < 0 || illnessEdt->text().length() > 7){
+    if(!(*ok) || num < 0 || illnessEdt->text().length() > 4){
         addEffect(illnessEdt);
         isCorrect = false;
     }
 
     num = anotherEdt->text().toLongLong(ok);
-    anotherEdt->text().isSimpleText();
-    if(!(*ok) || num < 0 || anotherEdt->text().length() > 7){
+    if(!(*ok) || num < 0 || anotherEdt->text().length() > 4){
         addEffect(anotherEdt);
         isCorrect = false;
     }
 
     num = hookyEdt->text().toLongLong(ok);
-    if(!(*ok) || num < 0 || hookyEdt->text().length() > 7){
+    if(!(*ok) || num < 0 || hookyEdt->text().length() > 4){
         addEffect(hookyEdt);
         isCorrect = false;
     }
 
     delete ok;
-
     changeNumFilledEdits();
 
     return isCorrect;

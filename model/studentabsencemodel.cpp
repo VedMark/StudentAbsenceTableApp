@@ -118,8 +118,7 @@ bool StudentAbsenceModel::insertRows(int row, int count, const QModelIndex &pare
 
     for(int i = 0; i < count; ++i)
     {
-        StudentEntry newStudentEntry = StudentEntry();
-        studentEntryList.insert(row, newStudentEntry);
+        studentEntryList.insert(row, StudentEntry());
     }
 
     endInsertRows();
@@ -147,7 +146,7 @@ Qt::ItemFlags StudentAbsenceModel::flags(const QModelIndex &index) const
     if (!index.isValid())
         return Qt::ItemIsEnabled;
 
-    return QAbstractTableModel::flags(index) | Qt::ItemIsEditable;
+    return QAbstractTableModel::flags(index);
 }
 
 qint64 StudentAbsenceModel::entriesSize() const
@@ -182,6 +181,16 @@ void StudentAbsenceModel::createHorizontalHeader()
     horizontalHeader->setItem(0, 2, absence_root_item);
 }
 
+const QList<StudentEntry>& StudentAbsenceModel::getStudentEntryList() const
+{
+    return studentEntryList;
+}
+
+void StudentAbsenceModel::setStudentEntryList(const QList<StudentEntry> &value)
+{
+    studentEntryList = value;
+}
+
 
 
 RussianFullName::RussianFullName()
@@ -193,6 +202,12 @@ RussianFullName::RussianFullName(QString s_, QString n_, QString p_)
     : surname(s_),
       name(n_),
       patronymic(p_){}
+
+RussianFullName::RussianFullName(const RussianFullName & name)
+    : surname(name.surname),
+      name(name.name),
+      patronymic(name.patronymic)
+{}
 
 RussianFullName &RussianFullName::operator=(const RussianFullName & anotherName)
 {
@@ -259,6 +274,10 @@ Group::Group(QString val)
     value = val;
 }
 
+Group::Group(const Group & group)
+    : value(group.value)
+{}
+
 Group &Group::operator=(const Group &anotherGroup)
 {
     value = anotherGroup.value;
@@ -302,6 +321,12 @@ Absence::Absence(qint16 illness_, qint16 another_, qint16 hooky_)
     : illness(illness_),
       another(another_),
       hooky(hooky_){}
+
+Absence::Absence(const Absence &abs)
+    : illness(abs.illness),
+      another(abs.another),
+      hooky(abs.hooky)
+{}
 
 Absence &Absence::operator=(const Absence &anotherAbsence)
 {
@@ -356,4 +381,8 @@ StudentEntry::StudentEntry(const RussianFullName &n_,
         const Group &gr_,
         const Absence &abs_)
     : name(n_), group(gr_), absence(abs_)
+{}
+
+StudentEntry::StudentEntry(const StudentEntry &entry)
+    : name(entry.name), group(entry.group), absence(entry.absence)
 {}

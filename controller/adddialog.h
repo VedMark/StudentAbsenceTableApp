@@ -7,7 +7,6 @@
 #include <QPushButton>
 
 #include "../model/studentabsencemodel.h"
-#include "../controller/modelcontroller.h"
 
 
 class AddDialog : public QDialog
@@ -19,12 +18,12 @@ public:
 
 signals:
     void entryCreated(const StudentEntry&);
-    void numFilledEditsChanged(bool);
+    void numFilledEditsChanged(int);
 
 private slots:
     void createEntry();
     void changeNumFilledEdits();
-    void enableFindButton(bool);
+    void enableAddButton(int num);
 
 private:
     void connectLineEdits();
@@ -32,7 +31,6 @@ private:
     void addLayouts();
 
     void addEffect(QWidget *widget);
-    void removeEffect();
 
     bool isName(const QString& text) const;
     bool verifyEdits();
@@ -41,7 +39,7 @@ private:
 
     StudentAbsenceModel *model;
 
-    QPushButton *findBtn;
+    QPushButton *addBtn;
     QPushButton *closeBtn;
 
     QLabel *surnameLbl;

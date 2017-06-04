@@ -1,7 +1,11 @@
 #include "studenttableview.h"
 #include "../controller/menucomponents.h"
 
+#include <QBrush>
+#include <QColor>
 #include <QPaintEvent>
+#include <QPainter>
+
 
 qint8 StudentTableView::ENTRIES_PER_PAGE = 20;
 
@@ -16,8 +20,7 @@ StudentTableView::StudentTableView(QWidget* parent)
     header->setStretchLastSection(true);
     setHorizontalHeader(header);
 
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    verticalHeader()->setDefaultSectionSize(30);
 
     connect(
         this, &StudentTableView::indexerChanged,
@@ -83,7 +86,31 @@ void StudentTableView::changePage(qint8 value)
     emit indexerChanged();
 }
 
-//void StudentTableView::paintEvent(QPaintEvent *)
-//{
+void StudentTableView::paintEvent(QPaintEvent *event)
+{
+//    Q_UNUSED(event);
+//    int height = viewport()->height() / ENTRIES_PER_PAGE;
 
-//}
+//    QPainter painter(viewport());
+//    painter.setPen(QColor(200, 200, 200));
+
+//    for(int i = 0; i < ENTRIES_PER_PAGE; ++i)
+//        painter.drawLine(0, i * height - 1, viewport()->width(), i * height - 1);
+
+//    QPainter painter(viewport());
+//    painter.setPen(QColor(200, 200, 200));
+//    int h = viewport()->height() / ENTRIES_PER_PAGE;
+
+//    for(int r = 0; r < ENTRIES_PER_PAGE; ++r)
+//        for(int c = 0; c < getModel()->LAST; ++c)
+//        {
+//            int x = columnViewportPosition(c);
+//            int y = rowViewportPosition(r);
+//            int w = columnWidth(c);
+//            painter.drawRect(x, y, w, h);
+//            painter.drawText(QPointF(x,y), getModel()->data(getModel()->index(r, c, QModelIndex())).toString());
+
+//        }
+
+    QTableView::paintEvent(event);
+}

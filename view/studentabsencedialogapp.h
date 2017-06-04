@@ -13,6 +13,7 @@
 #include "../model/studentabsencemodel.h"
 #include "../view/studenttableview.h"
 #include "../controller/adddialog.h"
+#include "../controller/finddialog.h"
 #include "../controller/modelcontroller.h"
 
 class FileException{};
@@ -41,9 +42,9 @@ protected slots:
     bool save();
     bool saveAs();
 
-    bool addEntry();
-    bool findEntry();
-    bool removeEntry();
+    void addEntry();
+    void findEntry();
+    void removeEntry();
 
 private:
     void createToolBar();
@@ -63,6 +64,7 @@ private:
 
 
     AddDialog *addDialog;
+    FindDialog *findDialog;
 };
 
 #endif // QTABLE_H

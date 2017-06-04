@@ -20,6 +20,7 @@ SOURCES += main.cpp\
     view/studentabsencedialogapp.cpp \
     view/studenttableview.cpp \
     controller/adddialog.cpp \
+    controller/finddialog.cpp \
     controller/modelcontroller.cpp \
     controller/menucomponents.cpp
 
@@ -29,6 +30,7 @@ HEADERS  += \
     view/studentabsencedialogapp.h \
     view/studenttableview.h \
     controller/adddialog.h \
+    controller/finddialog.h \
     controller/modelcontroller.h \
     controller/menucomponents.h
 

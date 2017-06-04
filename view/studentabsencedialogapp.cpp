@@ -14,12 +14,17 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     model = new StudentAbsenceModel(this);
 
     view = new StudentTableView(this);
+
+    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
     view->setModel(model);
     setCentralWidget(view);
 
     controller = new ModelController(model);
 
     addDialog = Q_NULLPTR;
+    findDialog = Q_NULLPTR;
 
     createToolBar();
     createMenu();
@@ -29,10 +34,9 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
 
     setConnections();
 
-    view->show();
-
     setMinimumSize(800, 600);
     resize(maximumSize());
+
 }
 
 StudentAbsenceTableApp::~StudentAbsenceTableApp()
@@ -57,6 +61,8 @@ void StudentAbsenceTableApp::resizeEvent(QResizeEvent *)
     view->setColumnWidth(3, width() / 8);
     view->setColumnWidth(4, width() / 6);
     view->setColumnWidth(5, width() / 12);
+
+    view->verticalHeader()->setDefaultSectionSize(31);
 }
 
 bool StudentAbsenceTableApp::newFile()
@@ -100,28 +106,6 @@ bool StudentAbsenceTableApp::saveAs()
     if(!fileName.endsWith(".xml"))
         fileName += ".xml";
     return saveFile(fileName);
-}
-
-bool StudentAbsenceTableApp::addEntry()
-{
-    if(addDialog != Q_NULLPTR)
-        delete addDialog;
-    addDialog = new AddDialog(model, this);
-
-    addDialog->show();
-    addDialog->raise();
-    addDialog->activateWindow();
-    return true;
-}
-
-bool StudentAbsenceTableApp::findEntry()
-{
-
-}
-
-bool StudentAbsenceTableApp::removeEntry()
-{
-
 }
 
 bool StudentAbsenceTableApp::loadFile(const QString &fileName)
@@ -184,6 +168,33 @@ void StudentAbsenceTableApp::setCurrentFileName(const QString &fileName)
     currentFileName = fileName;
 }
 
+void StudentAbsenceTableApp::addEntry()
+{
+    if(addDialog != Q_NULLPTR)
+        delete addDialog;
+    addDialog = new AddDialog(model, this);
+
+    addDialog->show();
+    addDialog->raise();
+    addDialog->activateWindow();
+}
+
+void StudentAbsenceTableApp::findEntry()
+{
+    if(findDialog != Q_NULLPTR)
+        delete findDialog;
+    findDialog = new FindDialog(model, this);
+
+    findDialog->show();
+    findDialog->raise();
+    findDialog->activateWindow();
+}
+
+void StudentAbsenceTableApp::removeEntry()
+{
+
+}
+
 void StudentAbsenceTableApp::createToolBar()
 {
     toolBar = new QToolBar(this);
@@ -206,7 +217,7 @@ void StudentAbsenceTableApp::createMenu()
 {
     menuBar = new QMenuBar(this);
 
-    QMenu *fileMenu = new QMenu(tr("file"), menuBar);
+    QMenu *fileMenu = new QMenu(tr("&Файл"), menuBar);
     fileMenu->addAction(MenuComponents::instance().newTable);
     fileMenu->addAction(MenuComponents::instance().openTable);
     fileMenu->addAction(MenuComponents::instance().saveTable);
@@ -215,7 +226,7 @@ void StudentAbsenceTableApp::createMenu()
     fileMenu->addAction(MenuComponents::instance().exitApp);
     menuBar->addMenu(fileMenu);
 
-    QMenu *editMenu = new QMenu(tr("edit"), menuBar);
+    QMenu *editMenu = new QMenu(tr("&Правка"), menuBar);
     editMenu->addAction(MenuComponents::instance().addEntries);
     editMenu->addAction(MenuComponents::instance().findEntries);
     editMenu->addAction(MenuComponents::instance().removeEntries);

@@ -6,16 +6,6 @@
 class StudentAbsenceModel;
 
 
-
-class InputError: public QException
-{
-public:
-    void raise() const { throw *this; }
-    InputError *clone() const { return new InputError(); }
-};
-
-
-
 class ModelController
 {
 public:
