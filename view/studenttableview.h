@@ -13,14 +13,20 @@ public:
 
     StudentTableView(QWidget *parent = Q_NULLPTR);
 
-    qint64 getPage() const;
-    void setPage(const qint64 &value);
+    inline qint64 getPage() const
+    { return page; }
+    inline void setPage(const qint64 &value)
+    { page = value; }
 
-    StudentAbsenceModel *getModel() const;
-    void setModel(StudentAbsenceModel *value);
+    inline StudentAbsenceModel *getModel() const
+    { return static_cast<StudentAbsenceModel*>(model()); }
+    inline void setModel(StudentAbsenceModel *value)
+    { QTableView::setModel(value); }
 
-    qint8 getEntriesPerPage() const;
-    void setEntriesPerPage(const qint8 &value);
+    inline qint8 getEntriesPerPage() const
+    { return entriesPerPage; }
+    inline void setEntriesPerPage(const qint8 &value)
+    { entriesPerPage = value; }
 
 public slots:
     bool showPrevPage();

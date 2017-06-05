@@ -14,10 +14,8 @@
 #include "../view/studenttableview.h"
 #include "../controller/adddialog.h"
 #include "../controller/finddialog.h"
-#include "../controller/removedialog.h"
 #include "../controller/modelcontroller.h"
-
-class FileException{};
+#include "../controller/removedialog.h"
 
 class StudentAbsenceTableApp : public QMainWindow
 {
@@ -53,9 +51,9 @@ private:
     void createContextMenu();
     void setConnections();
 
-    ModelController *controller;
     StudentAbsenceModel *model;
     StudentTableView *view;
+    ModelController *controller;
 
     QMenuBar *menuBar;
     QMenu *contextMenu;
@@ -63,10 +61,11 @@ private:
 
     QString currentFileName;
 
-
     AddDialog *addDialog;
     FindDialog *findDialog;
     RemoveDialog *removeDialog;
+
+    bool documentModified;
 };
 
 #endif // QTABLE_H

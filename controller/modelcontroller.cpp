@@ -20,5 +20,3 @@ void ModelController::clearModel()
 {
     model->removeRows(0, model->entriesSize(), QModelIndex());
 }
-
-

@@ -1,5 +1,6 @@
 #include "menucomponents.h"
 
+
 MenuComponents *MenuComponents::p_instance = Q_NULLPTR;
 
 MenuComponents &MenuComponents::instance()

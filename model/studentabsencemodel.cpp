@@ -34,18 +34,6 @@ QModelIndex StudentAbsenceModel::index(int row, int column, const QModelIndex &p
     return QModelIndex();
 }
 
-int StudentAbsenceModel::rowCount(const QModelIndex &parent) const
-{
-    Q_UNUSED(parent)
-    return studentEntryList.length();
-}
-
-int StudentAbsenceModel::columnCount(const QModelIndex &parent) const
-{
-    Q_UNUSED(parent);
-    return LAST;
-}
-
 QVariant StudentAbsenceModel::data(const QModelIndex &index, int role) const
 {
     switch (role)
@@ -149,11 +137,6 @@ Qt::ItemFlags StudentAbsenceModel::flags(const QModelIndex &index) const
     return QAbstractTableModel::flags(index);
 }
 
-qint64 StudentAbsenceModel::entriesSize() const
-{
-    return studentEntryList.size();
-}
-
 void StudentAbsenceModel::createHorizontalHeader()
 {
     horizontalHeader->setItem(0, 0, new QStandardItem(tr("Ф.И.О. студента")));
@@ -179,16 +162,6 @@ void StudentAbsenceModel::createHorizontalHeader()
     absence_list.clear();
 
     horizontalHeader->setItem(0, 2, absence_root_item);
-}
-
-QList<StudentEntry>& StudentAbsenceModel::getStudentEntryList()
-{
-    return studentEntryList;
-}
-
-void StudentAbsenceModel::setStudentEntryList(const QList<StudentEntry> &value)
-{
-    studentEntryList = value;
 }
 
 
@@ -217,62 +190,12 @@ RussianFullName &RussianFullName::operator=(const RussianFullName & anotherName)
     return *this;
 }
 
-QString RussianFullName::getFullName() const
-{
-    return surname + " " + name + " " + patronymic;
-}
-
-bool RussianFullName::setFullName(QString fullName)
-{
-    QStringList list = fullName.split(" ");
-
-    if(list.length() != 3)
-        return false;
-
-    surname = list[0];
-    name = list[1];
-    patronymic = list[2];
-    return true;
-}
-
-QString RussianFullName::getSurname() const
-{
-    return surname;
-}
-
-void RussianFullName::setSurname(const QString &value)
-{
-    surname = value;
-}
-
-QString RussianFullName::getName() const
-{
-    return name;
-}
-
-void RussianFullName::setName(const QString &value)
-{
-    name = value;
-}
-
-QString RussianFullName::getPatronimic() const
-{
-    return patronymic;
-}
-
-void RussianFullName::setPatronimic(const QString &value)
-{
-    patronymic = value;
-}
-
-
 
 qint8 Group::numLetters = 6;
 
 Group::Group(QString val)
-{
-    value = val;
-}
+    : value(val)
+{}
 
 Group::Group(const Group & group)
     : value(group.value)
@@ -282,26 +205,6 @@ Group &Group::operator=(const Group &anotherGroup)
 {
     value = anotherGroup.value;
     return *this;
-}
-
-QString Group::getValue() const
-{
-    return value;
-}
-
-void Group::setValue(const QString &val)
-{
-    value = val;
-}
-
-qint8 Group::getNumLetters()
-{
-    return numLetters;
-}
-
-void Group::setNumLetters(const qint8 &value)
-{
-    numLetters = value;
 }
 
 bool Group::isNumber(const QString & source) const
@@ -334,41 +237,6 @@ Absence &Absence::operator=(const Absence &anotherAbsence)
     another = anotherAbsence.another;
     hooky = anotherAbsence.hooky;
     return *this;
-}
-
-qint16 Absence::getIllness() const
-{
-    return illness;
-}
-
-void Absence::setIllness(qint16 value)
-{
-    illness = value;
-}
-
-qint16 Absence::getAnother() const
-{
-    return another;
-}
-
-void Absence::setAnother(qint16 value)
-{
-    another = value;
-}
-
-qint16 Absence::getHooky() const
-{
-    return hooky;
-}
-
-void Absence::setHooky(qint16 value)
-{
-    hooky = value;
-}
-
-qint16 Absence::getTotal() const
-{
-    return illness + another + hooky;
 }
 
 

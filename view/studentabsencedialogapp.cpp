@@ -6,6 +6,7 @@
 #include <QToolBar>
 
 #include "studentabsencedialogapp.h"
+#include "../controller/xmlparser.h"
 #include "../controller/menucomponents.h"
 
 StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
@@ -28,6 +29,8 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     findDialog = Q_NULLPTR;
     removeDialog = Q_NULLPTR;
 
+    documentModified = false;
+
     createToolBar();
     createMenu();
     createContextMenu();
@@ -43,6 +46,7 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
 
 StudentAbsenceTableApp::~StudentAbsenceTableApp()
 {
+    delete controller;
 }
 
 void StudentAbsenceTableApp::contextMenuEvent(QContextMenuEvent *mouse_pointer)
@@ -112,16 +116,17 @@ bool StudentAbsenceTableApp::saveAs()
 
 bool StudentAbsenceTableApp::loadFile(const QString &fileName)
 {
+    XMLParser *xmlParser = new XMLParser(model);
     try
     {
-        //textField->setText(fileRecorder.read(fileName, defaultFont));
-
-        //textField->setCurrentPos(QPoint(0, 0));
+        xmlParser->read(fileName);
         setCurrentFileName(fileName);
         statusBar()->showMessage(tr("Файл загружен"), 2000);
+        documentModified = false;
     }
-    catch(FileException &)
+    catch(...)
     {
+        delete xmlParser;
         statusBar()->showMessage(tr("Загрузка отменена"), 2000);
         return false;
     }
@@ -131,27 +136,30 @@ bool StudentAbsenceTableApp::loadFile(const QString &fileName)
 
 bool StudentAbsenceTableApp::saveFile(const QString &fileName)
 {
+    XMLParser *xmlParser = new XMLParser(model);
     try
-    {
-        //textField->setText(fileRecorder.read(fileName, defaultFont));
+    {       
+        xmlParser->write(fileName);
 
-        //textField->setCurrentPos(QPoint(0, 0));
         setCurrentFileName(fileName);
         statusBar()->showMessage(tr("Файл сохранён"), 2000);
+        documentModified = false;
     }
-    catch(FileException &)
+    catch(...)
     {
+        delete xmlParser;
         statusBar()->showMessage(tr("Сохранение отменено"), 2000);
         return false;
     }
 
+    delete xmlParser;
     return true;
 }
 
 bool StudentAbsenceTableApp::agreedToContinue()
 {
-    //if (!textEdit.document()->isModified())
-    //     return true;
+    if (!documentModified)
+         return true;
     QMessageBox::StandardButton answer = QMessageBox::warning(
                 this,
                 tr("Документ был изменён"),
@@ -275,5 +283,9 @@ void StudentAbsenceTableApp::setConnections()
 
     connect(MenuComponents::instance().prevPage, SIGNAL( triggered(bool) ), view, SLOT( showPrevPage() ) );
     connect(MenuComponents::instance().nextPage, SIGNAL( triggered(bool) ), view, SLOT( showNextPage() ) );
-    connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex,QVector<int>) ), view, SLOT( enableNextPage() ) );
+    connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex, QVector<int>) ), view, SLOT( enableNextPage() ) );
+    connect(
+        model, &StudentAbsenceModel::dataChanged,
+        [this] () { documentModified = true; }
+    );
 }

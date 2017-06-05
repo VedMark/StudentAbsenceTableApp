@@ -31,26 +31,6 @@ StudentTableView::StudentTableView(QWidget* parent)
     );
 }
 
-qint64 StudentTableView::getPage() const
-{
-    return page;
-}
-
-void StudentTableView::setPage(const qint64 &value)
-{
-    page = value;
-}
-
-StudentAbsenceModel *StudentTableView::getModel() const
-{
-    return static_cast<StudentAbsenceModel*>(model());
-}
-
-void StudentTableView::setModel(StudentAbsenceModel *value)
-{
-    QTableView::setModel(value);
-}
-
 bool StudentTableView::showPrevPage()
 {
     changePage(-1);
@@ -111,14 +91,4 @@ void StudentTableView::paintEvent(QPaintEvent *event)
 //        }
 
     QTableView::paintEvent(event);
-}
-
-qint8 StudentTableView::getEntriesPerPage() const
-{
-    return entriesPerPage;
-}
-
-void StudentTableView::setEntriesPerPage(const qint8 &value)
-{
-    entriesPerPage = value;
 }

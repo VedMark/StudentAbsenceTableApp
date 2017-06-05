@@ -31,8 +31,14 @@ public:
     bool hasIndex(int row, int column, const QModelIndex &parent) const;
     QModelIndex index(int row, int column, const QModelIndex &parent) const override;
 
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+    inline int rowCount(const QModelIndex &parent = QModelIndex()) const override{
+        Q_UNUSED(parent)
+        return studentEntryList.length();
+    }
+    inline int columnCount(const QModelIndex &parent = QModelIndex()) const override{
+        Q_UNUSED(parent);
+        return LAST;
+    }
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
@@ -42,10 +48,20 @@ public:
 
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 
-    qint64 entriesSize() const;
+    inline qint64 entriesSize() const
+    { return studentEntryList.size(); }
 
-    QList<StudentEntry> &getStudentEntryList();
-    void setStudentEntryList(const QList<StudentEntry> &value);
+    inline QList<StudentEntry> &getStudentEntryList()
+    { return studentEntryList; }
+    inline void setStudentEntryList(const QList<StudentEntry> &value){
+        beginInsertRows(QModelIndex(),0, value.size() - 1);
+        studentEntryList = value;
+        endInsertRows();
+        emit dataChanged(
+                    index(0, 0, QModelIndex()),
+                    index(studentEntryList.size(), LAST, QModelIndex())
+                    );
+    }
 
 private:
     void createHorizontalHeader();
@@ -68,17 +84,29 @@ public:
     RussianFullName(const RussianFullName&);
     RussianFullName &operator=(const RussianFullName&);
 
-    QString getFullName() const;
-    bool setFullName(QString fullName);
+    inline QString getFullName() const
+    { return surname + " " + name + " " + patronymic; }
+    inline bool setFullName(QString fullName) {
+        QStringList list = fullName.split(" ");
+        if(list.length() != 3) return false;
+        surname = list[0]; name = list[1]; patronymic = list[2];
+        return true;
+    }
 
-    QString getSurname() const;
-    void setSurname(const QString &value);
+    inline QString getSurname() const
+    { return surname; }
+    inline void setSurname(const QString &value)
+    { surname = value; }
 
-    QString getName() const;
-    void setName(const QString &value);
+    QString getName() const
+    { return name; }
+    void setName(const QString &value)
+    { name = value; }
 
-    QString getPatronimic() const;
-    void setPatronimic(const QString &value);
+    QString getPatronymic() const
+    { return patronymic; }
+    void setPatronymic(const QString &value)
+    { patronymic = value; }
 };
 
 
@@ -92,11 +120,15 @@ public:
     Group(const Group&);
     Group &operator=(const Group&);
 
-    QString getValue() const;
-    void setValue(const QString &value);
+    inline QString getValue() const
+    { return value; }
+    inline void setValue(const QString &value)
+    { this->value = value; }
 
-    static qint8 getNumLetters();
-    static void setNumLetters(const qint8 &value);
+    inline static qint8 getNumLetters()
+    { return numLetters; }
+    inline static void setNumLetters(const qint8 &value)
+    { numLetters = value; }
 
 private:
     bool isNumber(const QString & source) const;
@@ -116,16 +148,23 @@ public:
     Absence(const Absence&);
     Absence &operator=(const Absence&);
 
-    qint16 getIllness() const;
-    void setIllness(qint16 value);
+    inline qint16 getIllness() const
+    { return illness; }
+    inline void setIllness(qint16 value)
+    { illness = value; }
 
-    qint16 getAnother() const;
-    void setAnother(qint16 value);
+    inline qint16 getAnother() const
+    { return another; }
+    inline void setAnother(qint16 value)
+    { another = value; }
 
-    qint16 getHooky() const;
-    void setHooky(qint16 value);
+    inline qint16 getHooky() const
+    { return hooky; }
+    inline void setHooky(qint16 value)
+    { hooky = value; }
 
-    qint16 getTotal() const;
+    inline qint16 getTotal() const
+    { return illness + another + hooky; }
 };
 
 
@@ -135,8 +174,8 @@ struct StudentEntry{
     Group group;
     Absence absence;
 
-    StudentEntry();
-    StudentEntry(const RussianFullName&, const Group &group, const Absence&);
+    explicit StudentEntry();
+    explicit StudentEntry(const RussianFullName&, const Group &group, const Absence&);
     StudentEntry(const StudentEntry&);
 };
 

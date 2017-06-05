@@ -4,7 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui \
+    xml
 
 CONFIG += c++11
 
@@ -23,7 +24,8 @@ SOURCES += main.cpp\
     controller/finddialog.cpp \
     controller/modelcontroller.cpp \
     controller/menucomponents.cpp \
-    controller/removedialog.cpp
+    controller/removedialog.cpp \
+    controller/xmlparser.cpp
 
 HEADERS  += \
     model/studentabsencemodel.h \
@@ -34,6 +36,7 @@ HEADERS  += \
     controller/finddialog.h \
     controller/modelcontroller.h \
     controller/menucomponents.h \
-    controller/removedialog.h
+    controller/removedialog.h \
+    controller/xmlparser.h
 
 RESOURCES += icons.qrc

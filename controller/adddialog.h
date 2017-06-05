@@ -17,7 +17,6 @@ public:
     AddDialog(StudentAbsenceModel *model, QWidget *parent = Q_NULLPTR);
 
 signals:
-    void entryCreated(const StudentEntry&);
     void numFilledEditsChanged(int);
 
 protected slots:
