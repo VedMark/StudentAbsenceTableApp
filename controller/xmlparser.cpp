@@ -9,7 +9,7 @@ const QString XMLParser::XML_TAG_STUDENT_DATA = "studentData";
 const QString XMLParser::XML_TAG_ENTRY = "entry";
 const QString XMLParser::XML_TAG_SURNAME = "surname";
 const QString XMLParser::XML_TAG_NAME = "name";
-const QString XMLParser::XML_TAG_PATROMYMIC = "patromymic";
+const QString XMLParser::XML_TAG_PATROMYMIC = "patronymic";
 const QString XMLParser::XML_TAG_GROUP = "group";
 const QString XMLParser::XML_TAG_ILLNESS = "illness";
 const QString XMLParser::XML_TAG_ANOTHER = "another";
@@ -17,16 +17,10 @@ const QString XMLParser::XML_TAG_HOOKY = "hooky";
 
 XMLParser::XMLParser(StudentAbsenceModel *model_)
     : model(model_)
-{
-    //reader = new QXmlStreamReader();
-    writer = new QXmlStreamWriter();
-}
+{}
 
 XMLParser::~XMLParser()
-{
-    //delete reader;
-    delete writer;
-}
+{}
 
 bool XMLParser::read(const QString& file)
 {
@@ -79,6 +73,7 @@ bool XMLParser::read(const QString& file)
 
 bool XMLParser::write(const QString& file)
 {
+    QXmlStreamWriter *writer = new QXmlStreamWriter();
     QFile inFile(file);
 
     writer->setDevice(&inFile);
@@ -90,7 +85,7 @@ bool XMLParser::write(const QString& file)
 
     foreach (const StudentEntry& entry, model->getStudentEntryList()) {
         writer->writeStartElement(XML_TAG_ENTRY);
-        writeEntry(entry);
+        writeEntry(writer, entry);
         writer->writeEndElement();
     }
 
@@ -102,7 +97,7 @@ bool XMLParser::write(const QString& file)
     return true;
 }
 
-void XMLParser::writeEntry(const StudentEntry &entry)
+void XMLParser::writeEntry(QXmlStreamWriter * writer, const StudentEntry &entry)
 {
     writer->writeStartElement(XML_TAG_SURNAME);
     writer->writeCharacters(entry.name.getSurname());

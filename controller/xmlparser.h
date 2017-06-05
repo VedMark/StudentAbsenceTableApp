@@ -46,7 +46,7 @@ private:
 
     StudentAbsenceModel *model;
 
-    //QXmlStreamReader *reader;
+    QXmlStreamReader *reader;
     QXmlStreamWriter *writer;
 
 };
