@@ -15,6 +15,7 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
 
     view = new StudentTableView(this);
 
+    view->setEntriesPerPage(20);
     view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
@@ -25,6 +26,7 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
 
     addDialog = Q_NULLPTR;
     findDialog = Q_NULLPTR;
+    removeDialog = Q_NULLPTR;
 
     createToolBar();
     createMenu();
@@ -192,7 +194,13 @@ void StudentAbsenceTableApp::findEntry()
 
 void StudentAbsenceTableApp::removeEntry()
 {
+    if(removeDialog != Q_NULLPTR)
+        delete removeDialog;
+    removeDialog = new RemoveDialog(model, this);
 
+    removeDialog->show();
+    removeDialog->raise();
+    removeDialog->activateWindow();
 }
 
 void StudentAbsenceTableApp::createToolBar()

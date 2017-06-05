@@ -181,7 +181,7 @@ void StudentAbsenceModel::createHorizontalHeader()
     horizontalHeader->setItem(0, 2, absence_root_item);
 }
 
-const QList<StudentEntry>& StudentAbsenceModel::getStudentEntryList() const
+QList<StudentEntry>& StudentAbsenceModel::getStudentEntryList()
 {
     return studentEntryList;
 }

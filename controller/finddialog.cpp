@@ -8,8 +8,6 @@
 
 #include <algorithm>
 #include <functional>
-#include <iterator>
-#include <vector>
 
 FindDialog::FindDialog(StudentAbsenceModel *model_, QWidget *parent)
     : QDialog(parent)
@@ -65,10 +63,11 @@ FindDialog::FindDialog(StudentAbsenceModel *model_, QWidget *parent)
 
     configStackedWidget();
 
-    findBtn         = new QPushButton("Найти", this);
-    findBtn->setEnabled(false);
+    okBtn         = new QPushButton("Найти", this);
+    okBtn->setEnabled(false);
     closeBtn        = new QPushButton("Закрыть", this);
 
+    setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     setWindowTitle(tr("Найти записи"));
     setMinimumSize(500, 200);
     setMaximumSize(1000, 600);
@@ -94,10 +93,32 @@ void FindDialog::displayStudentEntryList(const QList<StudentEntry> &list)
          (QApplication::desktop()->height() - height()) / 2);
 }
 
-void FindDialog::findEntries()
+void FindDialog::handleOkBtn()
 {
     if(verifyEdits())
     {
+        QList<StudentEntry> searchResult;
+        std::copy_if(model->getStudentEntryList().begin(),
+                     model->getStudentEntryList().end(),
+                     std::back_inserter(searchResult),
+                     condition());
+
+        if(searchResult.isEmpty()){
+            QMessageBox::information(this, "", "Данных по запросу не найдено", QMessageBox::Ok);
+            resultTable->setVisible(false);
+            resize(sizeHint());
+            move((QApplication::desktop()->width() - width()) / 2,
+                 (QApplication::desktop()->height() - height()) / 2);
+        }
+        else
+            displayStudentEntryList(searchResult);
+    }
+    else
+        QMessageBox::information(this, "Внимание!", "Введены некорректные данные!", QMessageBox::Ok);
+}
+
+std::function<bool (const StudentEntry &)> FindDialog::condition()
+{
         std::function<bool (const StudentEntry &)> condition;
 
         switch (stackedWidget->currentIndex()) {
@@ -137,20 +158,7 @@ void FindDialog::findEntries()
             break;
         }
         }
-
-        QList<StudentEntry> searchResult;
-        std::copy_if(model->getStudentEntryList().begin(),
-                     model->getStudentEntryList().end(),
-                     std::back_inserter(searchResult),
-                     condition);
-        if(searchResult.isEmpty())
-            QMessageBox::information(this, "", "Данных по запросу не найдено", QMessageBox::Ok);
-        else
-            displayStudentEntryList(searchResult);
-    }
-    else
-        QMessageBox::information(this, "Внимание!", "Введены некорректные данные!", QMessageBox::Ok);
-
+        return condition;
 }
 
 void FindDialog::changeNumFilledEdits()
@@ -183,17 +191,17 @@ void FindDialog::changeNumFilledEdits()
     emit numFilledEditsChanged(numFilledEdits);
 }
 
-void FindDialog::enableFindButton(int num)
+void FindDialog::enableOkButton(int num)
 {
     switch (stackedWidget->currentIndex()) {
     case FIRST:
-        findBtn->setEnabled(num == 2);
+        okBtn->setEnabled(num == 2);
         break;
     case SECOND:
-        findBtn->setEnabled(num == 2);
+        okBtn->setEnabled(num == 2);
         break;
     case THIRD:
-        findBtn->setEnabled(num == 3);
+        okBtn->setEnabled(num == 3);
         break;
     }
 }
@@ -258,9 +266,9 @@ void FindDialog::connectLineEdits()
         [this] () { stackedWidget->setCurrentIndex(2); }
     );
 
-    connect(this, SIGNAL( numFilledEditsChanged(int) ), SLOT( enableFindButton(int) ) );
+    connect(this, SIGNAL( numFilledEditsChanged(int) ), SLOT( enableOkButton(int) ) );
 
-    connect(findBtn,  SIGNAL( clicked(bool) ), SLOT( findEntries() ) );
+    connect(okBtn,  SIGNAL( clicked(bool) ), SLOT( handleOkBtn() ) );
 
     connect(closeBtn, SIGNAL( clicked(bool) ), SLOT( close() ) );
 }
@@ -281,7 +289,7 @@ void FindDialog::addLayouts()
 
     QHBoxLayout *bottomRightLayout = new QHBoxLayout;
     bottomRightLayout->addStretch(1);
-    bottomRightLayout->addWidget(findBtn);
+    bottomRightLayout->addWidget(okBtn);
     bottomRightLayout->addWidget(closeBtn);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;

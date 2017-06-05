@@ -7,8 +7,6 @@
 #include <QPainter>
 
 
-qint8 StudentTableView::ENTRIES_PER_PAGE = 20;
-
 StudentTableView::StudentTableView(QWidget* parent)
     : QTableView(parent)
 {
@@ -75,13 +73,13 @@ void StudentTableView::enablePrevPage()
 void StudentTableView::enableNextPage()
 {
     MenuComponents::instance().nextPage->setEnabled(
-                        page < static_cast<int>(getModel()->entriesSize() / ENTRIES_PER_PAGE));
+                        page < static_cast<int>(getModel()->entriesSize() / entriesPerPage));
 }
 
 void StudentTableView::changePage(qint8 value)
 {
     qint64 nextPage = page + value;
-    qint64 maxNumPages = static_cast<int>(getModel()->entriesSize() / ENTRIES_PER_PAGE);
+    qint64 maxNumPages = static_cast<int>(getModel()->entriesSize() / entriesPerPage);
     page = nextPage <= 0 ? 0 : nextPage > maxNumPages ? maxNumPages : nextPage;
     emit indexerChanged();
 }
@@ -113,4 +111,14 @@ void StudentTableView::paintEvent(QPaintEvent *event)
 //        }
 
     QTableView::paintEvent(event);
+}
+
+qint8 StudentTableView::getEntriesPerPage() const
+{
+    return entriesPerPage;
+}
+
+void StudentTableView::setEntriesPerPage(const qint8 &value)
+{
+    entriesPerPage = value;
 }

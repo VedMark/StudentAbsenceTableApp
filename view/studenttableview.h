@@ -10,7 +10,6 @@ class StudentTableView : public QTableView
 {
     Q_OBJECT
 public:
-    static qint8 ENTRIES_PER_PAGE;
 
     StudentTableView(QWidget *parent = Q_NULLPTR);
 
@@ -19,6 +18,9 @@ public:
 
     StudentAbsenceModel *getModel() const;
     void setModel(StudentAbsenceModel *value);
+
+    qint8 getEntriesPerPage() const;
+    void setEntriesPerPage(const qint8 &value);
 
 public slots:
     bool showPrevPage();
@@ -36,6 +38,8 @@ signals:
     void indexerChanged();
 
 private:
+    qint8 entriesPerPage;
+
     HierarchicalHeaderView *header;
     qint64 page;
 };

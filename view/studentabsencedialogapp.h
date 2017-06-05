@@ -14,6 +14,7 @@
 #include "../view/studenttableview.h"
 #include "../controller/adddialog.h"
 #include "../controller/finddialog.h"
+#include "../controller/removedialog.h"
 #include "../controller/modelcontroller.h"
 
 class FileException{};
@@ -65,6 +66,7 @@ private:
 
     AddDialog *addDialog;
     FindDialog *findDialog;
+    RemoveDialog *removeDialog;
 };
 
 #endif // QTABLE_H

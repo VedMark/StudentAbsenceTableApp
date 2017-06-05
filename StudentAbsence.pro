@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     controller/adddialog.cpp \
     controller/finddialog.cpp \
     controller/modelcontroller.cpp \
-    controller/menucomponents.cpp
+    controller/menucomponents.cpp \
+    controller/removedialog.cpp
 
 HEADERS  += \
     model/studentabsencemodel.h \
@@ -32,6 +33,7 @@ HEADERS  += \
     controller/adddialog.h \
     controller/finddialog.h \
     controller/modelcontroller.h \
-    controller/menucomponents.h
+    controller/menucomponents.h \
+    controller/removedialog.h
 
 RESOURCES += icons.qrc

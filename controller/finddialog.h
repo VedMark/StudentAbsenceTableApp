@@ -22,37 +22,33 @@ public:
     FindDialog(StudentAbsenceModel *model, QWidget *parent = Q_NULLPTR);
     ~FindDialog();
 
-    void displayStudentEntryList(const QList<StudentEntry>&);
 
 signals:
     void numFilledEditsChanged(int);
 
-private slots:
-    void findEntries();
-    void changeNumFilledEdits();
-    void enableFindButton(int);
-
-private:
+protected:
     enum SearchPattern{
         FIRST,
         SECOND,
         THIRD
     };
 
+    void displayStudentEntryList(const QList<StudentEntry>&);
+
     const qint8 MAX_NUM_FILLED_EDITS = 2;
 
-    void configStackedWidget();
-    void connectLineEdits();
-    void addLayouts();
+
+    std::function<bool (const StudentEntry &)> condition();
 
     void addEffect(QWidget *widget);
 
     bool isName(const QString& text) const;
     bool verifyEdits();
 
+
     StudentAbsenceModel *model;
 
-    QPushButton *findBtn;
+    QPushButton *okBtn;
     QPushButton *closeBtn;
 
     StudentTableView *resultTable;
@@ -89,6 +85,15 @@ private:
 
     QList<QLineEdit*> listEdits;
 
+protected slots:
+    virtual void handleOkBtn();
+    virtual void changeNumFilledEdits();
+    virtual void enableOkButton(int);
+
+private:
+    void configStackedWidget();
+    void connectLineEdits();
+    void addLayouts();
 };
 
 #endif // FINDDIALOG_H

@@ -44,7 +44,7 @@ public:
 
     qint64 entriesSize() const;
 
-    const QList<StudentEntry> &getStudentEntryList() const;
+    QList<StudentEntry> &getStudentEntryList();
     void setStudentEntryList(const QList<StudentEntry> &value);
 
 private:

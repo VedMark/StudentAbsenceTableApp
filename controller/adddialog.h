@@ -20,10 +20,10 @@ signals:
     void entryCreated(const StudentEntry&);
     void numFilledEditsChanged(int);
 
-private slots:
-    void createEntry();
-    void changeNumFilledEdits();
-    void enableAddButton(int num);
+protected slots:
+    virtual void createEntry();
+    virtual void changeNumFilledEdits();
+    virtual void enableAddButton(int num);
 
 private:
     void connectLineEdits();
