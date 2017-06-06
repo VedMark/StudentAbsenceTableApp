@@ -104,7 +104,7 @@ void FindDialog::handleOkBtn()
                      condition());
 
         if(searchResult.isEmpty()){
-            QMessageBox::information(this, "", "Данных по запросу не найдено", QMessageBox::Ok);
+            QMessageBox::information(this, "Внимание!", "Данных по запросу не найдено", QMessageBox::Ok);
             resultTable->setVisible(false);
             resize(sizeHint());
             move((QApplication::desktop()->width() - width()) / 2,
@@ -352,13 +352,13 @@ bool FindDialog::verifyEdits()
             isCorrect = false;
         }
         num = lowBoundEdt->text().toLongLong(ok);
-        if(!(*ok) || num < 0 || num > INT8_MAX){
+        if(!(*ok) || num < 0 || num > INT16_MAX){
             addEffect(lowBoundEdt);
             isCorrect = false;
         }
 
         num = topBoundEdt->text().toLongLong(ok);
-        if(!(*ok) || num < 0 || num > INT8_MAX){
+        if(!(*ok) || num < 0 || num > INT16_MAX){
             addEffect(topBoundEdt);
             isCorrect = false;
         }

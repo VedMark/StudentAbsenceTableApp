@@ -4,6 +4,7 @@
 #include <QScrollBar>
 #include <QStatusBar>
 #include <QToolBar>
+#include <iterator>
 
 #include "studentabsencedialogapp.h"
 #include "../controller/xmlparser.h"
@@ -42,6 +43,7 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     setMinimumSize(800, 600);
     resize(maximumSize());
 
+    setWindowTitle("Таблица пропусков студентов");
 }
 
 StudentAbsenceTableApp::~StudentAbsenceTableApp()
@@ -124,8 +126,16 @@ bool StudentAbsenceTableApp::loadFile(const QString &fileName)
         statusBar()->showMessage(tr("Файл загружен"), 2000);
         documentModified = false;
     }
-    catch(...)
+    catch(FileOpenException)
     {
+        QMessageBox::warning(this, "Ошибка!", "Ошибка чтения файла!", QMessageBox::Ok);
+        delete xmlParser;
+        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+        return false;
+    }
+    catch(FileReadException)
+    {
+        QMessageBox::warning(this, "Ошибка!", "Ошибка чтения файла!", QMessageBox::Ok);
         delete xmlParser;
         statusBar()->showMessage(tr("Загрузка отменена"), 2000);
         return false;
@@ -145,10 +155,18 @@ bool StudentAbsenceTableApp::saveFile(const QString &fileName)
         statusBar()->showMessage(tr("Файл сохранён"), 2000);
         documentModified = false;
     }
-    catch(...)
+    catch(FileOpenException)
     {
+        QMessageBox::warning(this, "Ошибка!", "Ошибка открытия файла!", QMessageBox::Ok);
         delete xmlParser;
-        statusBar()->showMessage(tr("Сохранение отменено"), 2000);
+        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+        return false;
+    }
+    catch(FileReadException)
+    {
+        QMessageBox::warning(this, "Ошибка!", "Ошибка открытия файла!", QMessageBox::Ok);
+        delete xmlParser;
+        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
         return false;
     }
 

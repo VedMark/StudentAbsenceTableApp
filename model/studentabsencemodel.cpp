@@ -116,14 +116,12 @@ bool StudentAbsenceModel::insertRows(int row, int count, const QModelIndex &pare
 bool StudentAbsenceModel::removeRows(int row, int count, const QModelIndex &parent)
 {
     Q_UNUSED(parent);
-    beginRemoveRows(QModelIndex(), row, count);
+    beginRemoveRows(QModelIndex(), row, row + count - 1);
 
     for(int i = 0; i < count; ++i)
     {
         studentEntryList.removeAt(row);
     }
-
-    studentEntryList.clear();
 
     endRemoveRows();
     return true;

@@ -42,13 +42,9 @@ private:
     static const QString XML_TAG_ANOTHER;
     static const QString XML_TAG_HOOKY;
 
-    void writeEntry(const StudentEntry &entry);
+    void writeEntry(QXmlStreamWriter *writer, const StudentEntry &entry);
 
     StudentAbsenceModel *model;
-
-    QXmlStreamReader *reader;
-    QXmlStreamWriter *writer;
-
 };
 
 #endif // XMLPARSER_H
