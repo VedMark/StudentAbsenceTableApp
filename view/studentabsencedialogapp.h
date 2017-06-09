@@ -11,6 +11,9 @@
 #include <QTableView>
 #include <QWidget>
 
+#include <QProgressBar>
+#include <QProgressDialog>
+
 #include "../model/studentabsencemodel.h"
 #include "../view/HierarchicalHeaderView.h"
 #include "../view/proxymodel.h"
@@ -52,6 +55,17 @@ protected slots:
     void findEntry();
     void removeEntry();
 
+signals:
+    void progressBarSignal(const QString&);
+    void oneMoreSignal(const QString&);
+    void secondSignal(const QString&);
+
+public slots:
+    void experimentFunction(const QString& fileName);
+    void experimentFunction2();
+    void experimentFunction3(const QString& fileName);
+    void experimentFunction4(const QString& fileName);
+
 private:
     void createMainWidget();
     void createToolBar();
@@ -77,6 +91,9 @@ private:
     RemoveDialog *removeDialog;
 
     bool documentModified;
+
+    QFutureWatcher<void> fw;
+    QProgressBar *progressBar;
 };
 
 #endif // QTABLE_H

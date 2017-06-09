@@ -7,6 +7,10 @@
 #include <QToolBar>
 #include <iterator>
 
+#include <QThread>
+#include <QFutureWatcher>
+#include <QtConcurrent/QtConcurrent>
+
 #include "studentabsencedialogapp.h"
 #include "../controller/xmlparser.h"
 #include "../controller/menucomponents.h"
@@ -20,7 +24,7 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     controller = new ModelController(model);
     proxyModel = new ProxyModel(model, this);
     proxyModel->setSourceModel(model);
-    view->setModel(proxyModel);
+    view->setModel(model);
 
     view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -40,11 +44,22 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
 
     documentModified = false;
 
+    setStatusBar(new QStatusBar(this));
+
+    progressBar = new QProgressBar(statusBar());
+    progressBar->setMinimum(0);
+    progressBar->setMaximum(0);
+    progressBar->setMaximumWidth(150);
+    progressBar->hide();
+    statusBar()->addPermanentWidget(progressBar);
+
+    connect(&fw, SIGNAL(finished()), SLOT(experimentFunction2()));
+    connect(this, SIGNAL(oneMoreSignal(QString)), SLOT( experimentFunction(QString) ) );
+    connect(this, SIGNAL(secondSignal(QString)), SLOT( experimentFunction4(QString) ) );
+
     createToolBar();
     createMenu();
     createContextMenu();
-
-    setStatusBar(new QStatusBar(this));
 
     setConnections();
 
@@ -123,30 +138,69 @@ bool StudentAbsenceTableApp::saveAs()
 
 bool StudentAbsenceTableApp::loadFile(const QString &fileName)
 {
-    XMLParser *xmlParser = new XMLParser(model);
+   emit oneMoreSignal(fileName);
+}
+
+
+void StudentAbsenceTableApp::experimentFunction(const QString &fileName)
+{
+    QFuture<void> future =  QtConcurrent::run(this, &StudentAbsenceTableApp::experimentFunction3, fileName);
+    fw.setFuture(future);
+
+    progressBar->show();
+}
+
+void StudentAbsenceTableApp::experimentFunction2()
+{
+    progressBar->hide();
+}
+
+void StudentAbsenceTableApp::experimentFunction3(const QString &fileName)
+{
+    //emit secondSignal(fileName);
+    auto xmlParser = XMLParser(model);
+
     try
     {
-        xmlParser->read(fileName);
+        xmlParser.read(fileName);
         setCurrentFileName(fileName);
         statusBar()->showMessage(tr("Файл загружен"), 2000);
         documentModified = false;
     }
     catch(FileOpenException)
     {
-        QMessageBox::warning(this, "Ошибка!", "Ошибка чтения файла!", QMessageBox::Ok);
-        delete xmlParser;
+        QMessageBox::warning(this, "Ошибка!", "Ошибка открытия файла!", QMessageBox::Ok);
         statusBar()->showMessage(tr("Загрузка отменена"), 2000);
-        return false;
     }
     catch(FileReadException)
     {
         QMessageBox::warning(this, "Ошибка!", "Ошибка чтения файла!", QMessageBox::Ok);
-        delete xmlParser;
         statusBar()->showMessage(tr("Загрузка отменена"), 2000);
-        return false;
     }
+}
 
-    return true;
+void StudentAbsenceTableApp::experimentFunction4(const QString &fileName)
+{
+
+    auto xmlParser = XMLParser(model);
+
+    try
+    {
+        xmlParser.read(fileName);
+        setCurrentFileName(fileName);
+        statusBar()->showMessage(tr("Файл загружен"), 2000);
+        documentModified = false;
+    }
+    catch(FileOpenException)
+    {
+        QMessageBox::warning(this, "Ошибка!", "Ошибка открытия файла!", QMessageBox::Ok);
+        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+    }
+    catch(FileReadException)
+    {
+        QMessageBox::warning(this, "Ошибка!", "Ошибка чтения файла!", QMessageBox::Ok);
+        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+    }
 }
 
 bool StudentAbsenceTableApp::saveFile(const QString &fileName)
