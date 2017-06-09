@@ -1,17 +1,18 @@
 #ifndef REMOVEDIALOG_H
 #define REMOVEDIALOG_H
 
-#include "../controller/finddialog.h"
+#include "../controller/abstractfinddialog.h"
 
-class RemoveDialog : public FindDialog
+class RemoveDialog : public AbstractFindDialog
 {
     Q_OBJECT
 
 public:
     RemoveDialog(StudentAbsenceModel *model, QWidget *parent = Q_NULLPTR);
+    ~RemoveDialog();
 
 protected:
-    void displayStudentEntryList(const QList<StudentEntry>&) = delete;
+    void displayStudentEntryList(StudentAbsenceModel::students);
 
 protected slots:
     void handleOkBtn();

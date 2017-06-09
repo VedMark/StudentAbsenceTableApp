@@ -2,7 +2,10 @@
 #define STUDENTABSENCEMODEL_H
 
 #include <QAbstractTableModel>
+#include <QList>
 #include <QStandardItemModel>
+
+#include <QDebug>
 
 class RussianFullName;
 class Group;
@@ -14,6 +17,8 @@ class StudentAbsenceModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
+    typedef QList<StudentEntry> students;
+
     enum Column{
         NAME,
         GROUP,
@@ -29,6 +34,7 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
     bool hasIndex(int row, int column, const QModelIndex &parent) const;
+
     QModelIndex index(int row, int column, const QModelIndex &parent) const override;
 
     inline int rowCount(const QModelIndex &parent = QModelIndex()) const override{
@@ -51,9 +57,9 @@ public:
     inline qint64 entriesSize() const
     { return studentEntryList.size(); }
 
-    inline QList<StudentEntry> &getStudentEntryList()
+    inline students &getStudentEntryList()
     { return studentEntryList; }
-    inline void setStudentEntryList(const QList<StudentEntry> &value){
+    inline void setStudentEntryList(const students &value){
         beginInsertRows(QModelIndex(),0, value.size() - 1);
         studentEntryList = value;
         endInsertRows();
@@ -61,12 +67,13 @@ public:
                     index(0, 0, QModelIndex()),
                     index(studentEntryList.size(), LAST, QModelIndex())
                     );
+        //qDebug() << rowCount();
     }
 
 private:
     void createHorizontalHeader();
 
-    QList<StudentEntry> studentEntryList;
+    students studentEntryList;
     QStandardItemModel *horizontalHeader;
 };
 

@@ -3,7 +3,7 @@
 
 #include <QtCore>
 
-class StudentAbsenceModel;
+#include "../model/studentabsencemodel.h"
 
 
 class ModelController
@@ -15,6 +15,8 @@ public:
     void setModel(StudentAbsenceModel *value);
 
     void clearModel();
+
+    void addEntry(qint64 row, const StudentEntry &entry);
 
 private:
     StudentAbsenceModel *model;

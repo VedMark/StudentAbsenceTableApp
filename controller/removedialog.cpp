@@ -7,30 +7,32 @@
 #include <algorithm>
 
 RemoveDialog::RemoveDialog(StudentAbsenceModel *model, QWidget *parent)
-    : FindDialog(model, parent)
+    : AbstractFindDialog(model, parent)
 {
     setWindowTitle("Удалить записи");
     okBtn->setText("Удалить");
 }
 
+RemoveDialog::~RemoveDialog()
+{}
+
+
 void RemoveDialog::handleOkBtn()
 {
     if(verifyEdits())
     {
-        QList<StudentEntry>& studentsList = model->getStudentEntryList();
+        StudentAbsenceModel::students &studentList = model->getStudentEntryList();
         qint64 length_before = model->getStudentEntryList().length();
 
         std::function<bool (const StudentEntry &)> cond = condition();
-        int index = 0;
-        int shift = 0;
-        for(QList<StudentEntry>::iterator entry = studentsList.begin(); entry < studentsList.end(); ++index, ++entry) {
-            if(cond(*entry)){
-                model->removeRows(index - shift, 1, QModelIndex());
-                shift++;
-            }
-        }
+
+        studentList.erase(
+                    std::remove_if(studentList.begin(),studentList.end(), cond),
+                    studentList.end());
 
         qint64 length_after = model->getStudentEntryList().length();
+        model->removeRows(length_after, length_before - length_after, QModelIndex());
+
         if(length_before - length_after == 0){
             QMessageBox::information(this, "Внимание!", "Данных по запросу не найдено", QMessageBox::Ok);
         }

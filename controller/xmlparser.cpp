@@ -3,8 +3,6 @@
 #include <QFile>
 #include <QIODevice>
 
-#include <QDebug>
-
 const QString XMLParser::XML_TAG_STUDENT_DATA = "studentData";
 const QString XMLParser::XML_TAG_ENTRY = "entry";
 const QString XMLParser::XML_TAG_SURNAME = "surname";
@@ -31,7 +29,7 @@ bool XMLParser::read(const QString& file)
 
     QXmlStreamReader *reader = new QXmlStreamReader(&inFile);
 
-    QList<StudentEntry> newDataList;
+    StudentAbsenceModel::students newDataList;
     StudentEntry *entry;
 
     while(!reader->atEnd())

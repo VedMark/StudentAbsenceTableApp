@@ -1,5 +1,6 @@
 #include <QContextMenuEvent>
 #include <QFileDialog>
+#include <QLayout>
 #include <QMessageBox>
 #include <QScrollBar>
 #include <QStatusBar>
@@ -15,16 +16,23 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
 {
     model = new StudentAbsenceModel(this);
 
-    view = new StudentTableView(this);
+    view = new QTableView(this);
+    controller = new ModelController(model);
+    proxyModel = new ProxyModel(model, this);
+    proxyModel->setSourceModel(model);
+    view->setModel(proxyModel);
 
-    view->setEntriesPerPage(20);
     view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    header = new HierarchicalHeaderView(Qt::Horizontal, this);
+    header->setHighlightSections(true);
+    header->setSectionResizeMode(QHeaderView::Fixed);
+    header->setStretchLastSection(true);
+    header->setDefaultSectionSize(30);
 
-    view->setModel(model);
-    setCentralWidget(view);
+    view->setHorizontalHeader(header);
 
-    controller = new ModelController(model);
+    createMainWidget();
 
     addDialog = Q_NULLPTR;
     findDialog = Q_NULLPTR;
@@ -68,9 +76,6 @@ void StudentAbsenceTableApp::resizeEvent(QResizeEvent *)
     view->setColumnWidth(2, width() / 8);
     view->setColumnWidth(3, width() / 8);
     view->setColumnWidth(4, width() / 6);
-    view->setColumnWidth(5, width() / 12);
-
-    view->verticalHeader()->setDefaultSectionSize(31);
 }
 
 bool StudentAbsenceTableApp::newFile()
@@ -148,7 +153,7 @@ bool StudentAbsenceTableApp::saveFile(const QString &fileName)
 {
     XMLParser *xmlParser = new XMLParser(model);
     try
-    {       
+    {
         xmlParser->write(fileName);
 
         setCurrentFileName(fileName);
@@ -229,6 +234,29 @@ void StudentAbsenceTableApp::removeEntry()
     removeDialog->activateWindow();
 }
 
+void StudentAbsenceTableApp::createMainWidget()
+{
+    mainWidget = new QWidget(this);
+    setCentralWidget(mainWidget);
+
+    QPushButton *pBtn1 = new QPushButton("1", this);
+    pBtn1->addAction(MenuComponents::instance().nextPage);
+    QPushButton *pBtn2 = new QPushButton("2", this);
+
+    QHBoxLayout *l1 = new QHBoxLayout;
+
+    l1->addWidget(pBtn1);
+    l1->addWidget(pBtn2);
+    l1->addStretch();
+
+    QVBoxLayout* l2 = new QVBoxLayout;
+
+    l2->addWidget(view);
+    l2->addLayout(l1);
+
+    centralWidget()->setLayout(l2);
+}
+
 void StudentAbsenceTableApp::createToolBar()
 {
     toolBar = new QToolBar(this);
@@ -299,11 +327,17 @@ void StudentAbsenceTableApp::setConnections()
     connect(MenuComponents::instance().findEntries, SIGNAL( triggered(bool) ), SLOT( findEntry() ) );
     connect(MenuComponents::instance().removeEntries, SIGNAL( triggered(bool) ), SLOT( removeEntry() ) );
 
-    connect(MenuComponents::instance().prevPage, SIGNAL( triggered(bool) ), view, SLOT( showPrevPage() ) );
-    connect(MenuComponents::instance().nextPage, SIGNAL( triggered(bool) ), view, SLOT( showNextPage() ) );
-    connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex, QVector<int>) ), view, SLOT( enableNextPage() ) );
+    connect(MenuComponents::instance().prevPage, SIGNAL( triggered(bool) ), proxyModel, SLOT( showPrevPage() ) );
+    connect(MenuComponents::instance().nextPage, SIGNAL( triggered(bool) ), proxyModel, SLOT( showNextPage() ) );
+    connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex, QVector<int>) ), proxyModel, SLOT( enableNextPage() ) );
+
     connect(
         model, &StudentAbsenceModel::dataChanged,
         [this] () { documentModified = true; }
+    );
+
+    connect(
+        model, &StudentAbsenceModel::dataChanged,
+        [this] () { proxyModel->refreshPageEntries(); }
     );
 }

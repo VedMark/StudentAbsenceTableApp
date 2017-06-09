@@ -3,6 +3,7 @@
 #include <QGraphicsColorizeEffect>
 
 #include "adddialog.h"
+#include "../controller/modelcontroller.h"
 
 AddDialog::AddDialog(StudentAbsenceModel *model_, QWidget *parent)
     :QDialog(parent)

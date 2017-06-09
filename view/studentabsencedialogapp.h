@@ -9,9 +9,11 @@
 #include <QMenuBar>
 #include <QToolBar>
 #include <QTableView>
+#include <QWidget>
 
 #include "../model/studentabsencemodel.h"
-#include "../view/studenttableview.h"
+#include "../view/HierarchicalHeaderView.h"
+#include "../view/proxymodel.h"
 #include "../controller/adddialog.h"
 #include "../controller/finddialog.h"
 #include "../controller/modelcontroller.h"
@@ -24,6 +26,11 @@ class StudentAbsenceTableApp : public QMainWindow
 public:
     StudentAbsenceTableApp(QWidget *parent = 0);
     ~StudentAbsenceTableApp();
+
+    inline ModelController *getController() const
+    { return controller; }
+    inline void setController(ModelController *value)
+    { controller = value; }
 
 protected:
     void contextMenuEvent(QContextMenuEvent *);
@@ -46,15 +53,19 @@ protected slots:
     void removeEntry();
 
 private:
+    void createMainWidget();
     void createToolBar();
     void createMenu();
     void createContextMenu();
     void setConnections();
 
     StudentAbsenceModel *model;
-    StudentTableView *view;
+    ProxyModel *proxyModel;
+    QTableView *view;
+    HierarchicalHeaderView *header;
     ModelController *controller;
 
+    QWidget *mainWidget;
     QMenuBar *menuBar;
     QMenu *contextMenu;
     QToolBar *toolBar;

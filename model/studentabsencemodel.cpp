@@ -24,13 +24,13 @@ bool StudentAbsenceModel::hasIndex(int row, int column, const QModelIndex &paren
     Q_UNUSED(parent);
     if(row < 0 || column < 0)
         return false;
-    return row < studentEntryList.length() && column < LAST;
+    return row < studentEntryList.size() && column < LAST;
 }
 
 QModelIndex StudentAbsenceModel::index(int row, int column, const QModelIndex &parent) const
 {
     if(hasIndex(row, column, parent))
-        return createIndex(row, column, (void*)&studentEntryList.at(row));
+        return createIndex(row, column, (void*)(&studentEntryList.at(row)));
     return QModelIndex();
 }
 
@@ -122,17 +122,17 @@ bool StudentAbsenceModel::removeRows(int row, int count, const QModelIndex &pare
     {
         studentEntryList.removeAt(row);
     }
-
     endRemoveRows();
+    emit dataChanged(index(row, 0, QModelIndex()), index(row + count - 1, LAST, QModelIndex()));
     return true;
 }
 
 Qt::ItemFlags StudentAbsenceModel::flags(const QModelIndex &index) const
 {
     if (!index.isValid())
-        return Qt::ItemIsEnabled;
+        return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable;
 
-    return QAbstractTableModel::flags(index);
+    return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable;
 }
 
 void StudentAbsenceModel::createHorizontalHeader()
