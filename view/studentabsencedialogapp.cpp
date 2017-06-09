@@ -53,9 +53,19 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     progressBar->hide();
     statusBar()->addPermanentWidget(progressBar);
 
-    connect(&fw, SIGNAL(finished()), SLOT(experimentFunction2()));
-    connect(this, SIGNAL(oneMoreSignal(QString)), SLOT( experimentFunction(QString) ) );
-    connect(this, SIGNAL(secondSignal(QString)), SLOT( experimentFunction4(QString) ) );
+    connect(&m_start, &QPushButton::clicked, this, [this]{
+        m_start.setEnabled(false);
+        QtConcurrent::run(this, &StudentAbsenceTableApp::loadFile);
+    });
+    connect(this, &StudentAbsenceTableApp::reqStatusMessage,
+            this, [this](const QString & msg){
+        statusBar()->showMessage(msg, 3000);
+    });
+    connect(this, &StudentAbsenceTableApp::reqFutureActive,
+            this, [this](bool active){
+        progressBar->setHidden(!active);
+        m_start.setEnabled(!active);
+    });
 
     createToolBar();
     createMenu();
@@ -110,7 +120,7 @@ bool StudentAbsenceTableApp::open()
                                                 tr("Открыть файл"), "/home/vedmark",
                                                 tr("Файл данных (*.xml)"));
         if(!openFileName.isEmpty())
-            return loadFile(openFileName);
+            return loadFile();
 
     }
     return false;
@@ -136,28 +146,10 @@ bool StudentAbsenceTableApp::saveAs()
     return saveFile(fileName);
 }
 
-bool StudentAbsenceTableApp::loadFile(const QString &fileName)
+bool StudentAbsenceTableApp::loadFile()
 {
-   emit oneMoreSignal(fileName);
-}
-
-
-void StudentAbsenceTableApp::experimentFunction(const QString &fileName)
-{
-    QFuture<void> future =  QtConcurrent::run(this, &StudentAbsenceTableApp::experimentFunction3, fileName);
-    fw.setFuture(future);
-
-    progressBar->show();
-}
-
-void StudentAbsenceTableApp::experimentFunction2()
-{
-    progressBar->hide();
-}
-
-void StudentAbsenceTableApp::experimentFunction3(const QString &fileName)
-{
-    //emit secondSignal(fileName);
+    emit reqFutureActive(true);
+    QString fileName = "/media/bsuir/data.xml";
     auto xmlParser = XMLParser(model);
 
     try
@@ -177,30 +169,9 @@ void StudentAbsenceTableApp::experimentFunction3(const QString &fileName)
         QMessageBox::warning(this, "Ошибка!", "Ошибка чтения файла!", QMessageBox::Ok);
         statusBar()->showMessage(tr("Загрузка отменена"), 2000);
     }
-}
-
-void StudentAbsenceTableApp::experimentFunction4(const QString &fileName)
-{
-
-    auto xmlParser = XMLParser(model);
-
-    try
-    {
-        xmlParser.read(fileName);
-        setCurrentFileName(fileName);
-        statusBar()->showMessage(tr("Файл загружен"), 2000);
-        documentModified = false;
-    }
-    catch(FileOpenException)
-    {
-        QMessageBox::warning(this, "Ошибка!", "Ошибка открытия файла!", QMessageBox::Ok);
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
-    }
-    catch(FileReadException)
-    {
-        QMessageBox::warning(this, "Ошибка!", "Ошибка чтения файла!", QMessageBox::Ok);
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
-    }
+    emit reqStatusMessage(tr("Oops, something went wrong."));
+    emit reqFutureActive(false);
+    return false;
 }
 
 bool StudentAbsenceTableApp::saveFile(const QString &fileName)
@@ -301,6 +272,7 @@ void StudentAbsenceTableApp::createMainWidget()
 
     l1->addWidget(pBtn1);
     l1->addWidget(pBtn2);
+    l1->addWidget(&m_start);
     l1->addStretch();
 
     QVBoxLayout* l2 = new QVBoxLayout;

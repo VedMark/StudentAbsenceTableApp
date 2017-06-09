@@ -7,12 +7,10 @@
 #include <QMainWindow>
 #include <QMenu>
 #include <QMenuBar>
+#include <QProgressBar>
 #include <QToolBar>
 #include <QTableView>
 #include <QWidget>
-
-#include <QProgressBar>
-#include <QProgressDialog>
 
 #include "../model/studentabsencemodel.h"
 #include "../view/HierarchicalHeaderView.h"
@@ -40,7 +38,7 @@ protected:
     void closeEvent(QCloseEvent *);
     void resizeEvent(QResizeEvent *);
 
-    bool loadFile(const QString &fileName);
+    bool loadFile();
     bool saveFile(const QString &fileName);
     bool agreedToContinue();
     void setCurrentFileName(const QString &fileName);
@@ -55,18 +53,11 @@ protected slots:
     void findEntry();
     void removeEntry();
 
-signals:
-    void progressBarSignal(const QString&);
-    void oneMoreSignal(const QString&);
-    void secondSignal(const QString&);
-
-public slots:
-    void experimentFunction(const QString& fileName);
-    void experimentFunction2();
-    void experimentFunction3(const QString& fileName);
-    void experimentFunction4(const QString& fileName);
-
 private:
+    Q_SIGNAL void reqStatusMessage(const QString &);
+    Q_SIGNAL void reqFutureActive(bool);
+    Q_SLOT void setProgressHidden(bool hidden) { progressBar->setHidden(hidden); }
+
     void createMainWidget();
     void createToolBar();
     void createMenu();
@@ -94,6 +85,7 @@ private:
 
     QFutureWatcher<void> fw;
     QProgressBar *progressBar;
+    QPushButton m_start{"Start Concurrent Task"};
 };
 
 #endif // QTABLE_H
