@@ -20,6 +20,9 @@
 #include "../controller/modelcontroller.h"
 #include "../controller/removedialog.h"
 
+using Job = std::function<void ()>;
+Q_DECLARE_METATYPE(Job)
+
 class StudentAbsenceTableApp : public QMainWindow
 {
     Q_OBJECT
@@ -38,7 +41,7 @@ protected:
     void closeEvent(QCloseEvent *);
     void resizeEvent(QResizeEvent *);
 
-    bool loadFile();
+    bool loadFile(const QString& fileName);
     bool saveFile(const QString &fileName);
     bool agreedToContinue();
     void setCurrentFileName(const QString &fileName);
@@ -54,9 +57,9 @@ protected slots:
     void removeEntry();
 
 private:
-    Q_SIGNAL void reqStatusMessage(const QString &);
-    Q_SIGNAL void reqFutureActive(bool);
-    Q_SLOT void setProgressHidden(bool hidden) { progressBar->setHidden(hidden); }
+    Q_SIGNAL void reqLoadFile(const QString& fileName);
+    Q_SIGNAL void reqSaveFile(const QString& fileName);
+    Q_SIGNAL void reqGui(const Job&);
 
     void createMainWidget();
     void createToolBar();
@@ -85,7 +88,6 @@ private:
 
     QFutureWatcher<void> fw;
     QProgressBar *progressBar;
-    QPushButton m_start{"Start Concurrent Task"};
 };
 
 #endif // QTABLE_H

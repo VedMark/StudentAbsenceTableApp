@@ -5,19 +5,19 @@
 #include <QScrollBar>
 #include <QStatusBar>
 #include <QToolBar>
-#include <iterator>
 
-#include <QThread>
-#include <QFutureWatcher>
-#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent>
 
 #include "studentabsencedialogapp.h"
 #include "../controller/xmlparser.h"
 #include "../controller/menucomponents.h"
 
+#include <functional>
+
 StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     : QMainWindow(parent)
 {
+    qRegisterMetaType<Job>();
     model = new StudentAbsenceModel(this);
 
     view = new QTableView(this);
@@ -53,20 +53,6 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     progressBar->hide();
     statusBar()->addPermanentWidget(progressBar);
 
-    connect(&m_start, &QPushButton::clicked, this, [this]{
-        m_start.setEnabled(false);
-        QtConcurrent::run(this, &StudentAbsenceTableApp::loadFile);
-    });
-    connect(this, &StudentAbsenceTableApp::reqStatusMessage,
-            this, [this](const QString & msg){
-        statusBar()->showMessage(msg, 3000);
-    });
-    connect(this, &StudentAbsenceTableApp::reqFutureActive,
-            this, [this](bool active){
-        progressBar->setHidden(!active);
-        m_start.setEnabled(!active);
-    });
-
     createToolBar();
     createMenu();
     createContextMenu();
@@ -74,7 +60,7 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     setConnections();
 
     setMinimumSize(800, 600);
-    resize(maximumSize());
+    showMaximized();
 
     setWindowTitle("Таблица пропусков студентов");
 }
@@ -117,10 +103,10 @@ bool StudentAbsenceTableApp::open()
 {
     if(agreedToContinue()){
         QString openFileName = QFileDialog::getOpenFileName(this,
-                                                tr("Открыть файл"), "/home/vedmark",
-                                                tr("Файл данных (*.xml)"));
+                                                            tr("Открыть файл"), "/home/vedmark",
+                                                            tr("Файл данных (*.xml)"));
         if(!openFileName.isEmpty())
-            return loadFile();
+            emit reqLoadFile(openFileName);
 
     }
     return false;
@@ -131,83 +117,96 @@ bool StudentAbsenceTableApp::save()
     if(currentFileName.isEmpty())
         return saveAs();
     else
-        return saveFile(currentFileName);
+        emit reqSaveFile(currentFileName);
+    return true;
 }
 
 bool StudentAbsenceTableApp::saveAs()
 {
     QString fileName = QFileDialog::getSaveFileName(this,
-                                                tr("Сохранить файл"), "/home/vedmark",
-                                                tr("Файл данных (*.xml)"));
+                                                    tr("Сохранить файл"), "/home/vedmark",
+                                                    tr("Файл данных (*.xml)"));
     if(fileName.isEmpty())
         return false;
     if(!fileName.endsWith(".xml"))
         fileName += ".xml";
-    return saveFile(fileName);
+    emit reqSaveFile(fileName);
+    return true;
 }
 
-bool StudentAbsenceTableApp::loadFile()
+bool StudentAbsenceTableApp::loadFile(const QString& fileName)
 {
-    emit reqFutureActive(true);
-    QString fileName = "/media/bsuir/data.xml";
+    reqGui([=] () { progressBar->show(); });
     auto xmlParser = XMLParser(model);
 
     try
     {
         xmlParser.read(fileName);
-        setCurrentFileName(fileName);
-        statusBar()->showMessage(tr("Файл загружен"), 2000);
-        documentModified = false;
+        reqGui([&] () {
+            setCurrentFileName(fileName);
+            statusBar()->showMessage(tr("Файл загружен"), 2000);
+            documentModified = false;
+        });
     }
     catch(FileOpenException)
     {
-        QMessageBox::warning(this, "Ошибка!", "Ошибка открытия файла!", QMessageBox::Ok);
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+        reqGui([=] () {
+            QMessageBox::warning(this, "Ошибка!", "Ошибка открытия файла!", QMessageBox::Ok);
+            statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+        });
+        return false;
     }
     catch(FileReadException)
     {
-        QMessageBox::warning(this, "Ошибка!", "Ошибка чтения файла!", QMessageBox::Ok);
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+        reqGui([=] () {
+            QMessageBox::warning(this, "Ошибка!", "Ошибка чтения файла!", QMessageBox::Ok);
+            statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+        });
+        return false;
     }
-    emit reqStatusMessage(tr("Oops, something went wrong."));
-    emit reqFutureActive(false);
-    return false;
+
+    reqGui([=] () { progressBar->hide(); });
+    return true;
 }
 
 bool StudentAbsenceTableApp::saveFile(const QString &fileName)
 {
-    XMLParser *xmlParser = new XMLParser(model);
+    reqGui([=] () { progressBar->show(); });
+    auto xmlParser = XMLParser(model);
+
     try
     {
-        xmlParser->write(fileName);
-
-        setCurrentFileName(fileName);
-        statusBar()->showMessage(tr("Файл сохранён"), 2000);
-        documentModified = false;
+        reqGui([&] () {
+            xmlParser.write(fileName);
+            setCurrentFileName(fileName);
+            statusBar()->showMessage(tr("Файл сохранён"), 2000);
+            documentModified = false;
+        });
     }
     catch(FileOpenException)
     {
-        QMessageBox::warning(this, "Ошибка!", "Ошибка открытия файла!", QMessageBox::Ok);
-        delete xmlParser;
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
-        return false;
+        reqGui([=] () {
+            QMessageBox::warning(this, "Ошибка!", "Ошибка открытия файла!", QMessageBox::Ok);
+            statusBar()->showMessage(tr("Сохраниние отменено"), 2000);
+        });
+
     }
     catch(FileReadException)
     {
-        QMessageBox::warning(this, "Ошибка!", "Ошибка открытия файла!", QMessageBox::Ok);
-        delete xmlParser;
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
-        return false;
+        reqGui([=] () {
+            QMessageBox::warning(this, "Ошибка!", "Ошибка чтения файла!", QMessageBox::Ok);
+            statusBar()->showMessage(tr("Сохранение отменено"), 2000);
+        });
     }
 
-    delete xmlParser;
+    reqGui([=] () { progressBar->hide(); });
     return true;
 }
 
 bool StudentAbsenceTableApp::agreedToContinue()
 {
     if (!documentModified)
-         return true;
+        return true;
     QMessageBox::StandardButton answer = QMessageBox::warning(
                 this,
                 tr("Документ был изменён"),
@@ -272,7 +271,6 @@ void StudentAbsenceTableApp::createMainWidget()
 
     l1->addWidget(pBtn1);
     l1->addWidget(pBtn2);
-    l1->addWidget(&m_start);
     l1->addStretch();
 
     QVBoxLayout* l2 = new QVBoxLayout;
@@ -357,13 +355,20 @@ void StudentAbsenceTableApp::setConnections()
     connect(MenuComponents::instance().nextPage, SIGNAL( triggered(bool) ), proxyModel, SLOT( showNextPage() ) );
     connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex, QVector<int>) ), proxyModel, SLOT( enableNextPage() ) );
 
-    connect(
-        model, &StudentAbsenceModel::dataChanged,
-        [this] () { documentModified = true; }
-    );
+    connect(model, &StudentAbsenceModel::dataChanged, this, [this] () {
+        documentModified = true;
+    });
+    connect(model, &StudentAbsenceModel::dataChanged, this, [this] () {
+        proxyModel->refreshPageEntries();
+    });
 
-    connect(
-        model, &StudentAbsenceModel::dataChanged,
-        [this] () { proxyModel->refreshPageEntries(); }
-    );
+    connect(this, &StudentAbsenceTableApp::reqLoadFile, this, [this] (const QString& fileName){
+        QtConcurrent::run(this, &StudentAbsenceTableApp::loadFile, fileName);
+    });
+    connect(this, &StudentAbsenceTableApp::reqSaveFile, this, [this] (const QString& fileName){
+        QtConcurrent::run(this, &StudentAbsenceTableApp::saveFile, fileName);
+    });
+    connect(this, &StudentAbsenceTableApp::reqGui, [this](const Job & job){
+        job();
+    });
 }

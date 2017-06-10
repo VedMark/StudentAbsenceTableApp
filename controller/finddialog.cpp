@@ -3,7 +3,6 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QMessageBox>
-#include <QTime>
 
 FindDialog::FindDialog(StudentAbsenceModel *model, QWidget *parent)
     :AbstractFindDialog(model, parent)
@@ -32,7 +31,6 @@ void FindDialog::handleOkBtn()
                  (QApplication::desktop()->height() - height()) / 2);
         }
         else{
-            QMessageBox::information(this, "Внимание!", "время поиска: ", QMessageBox::Ok);
             displayStudentEntryList(searchResult);
         }
     }
