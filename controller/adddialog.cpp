@@ -1,18 +1,19 @@
+#include <QGraphicsColorizeEffect>
 #include <QLayout>
 #include <QMessageBox>
-#include <QGraphicsColorizeEffect>
 
 #include "adddialog.h"
 #include "../controller/modelcontroller.h"
+
 
 AddDialog::AddDialog(StudentAbsenceModel *model_, QWidget *parent)
     :QDialog(parent)
 {
     model = model_;
 
-    addBtn         = new QPushButton("Добавить", this);
+    addBtn         = new QPushButton(tr("Добавить"), this);
     addBtn->setEnabled(false);
-    closeBtn        = new QPushButton("Закрыть", this);
+    closeBtn        = new QPushButton(tr("Закрыть"), this);
 
     surnameLbl      = new QLabel(tr("Фамилия"), this);
     nameLbl         = new QLabel(tr("Имя"), this);
@@ -37,6 +38,7 @@ AddDialog::AddDialog(StudentAbsenceModel *model_, QWidget *parent)
     listEdits << surnameEdt << nameEdt << patronymicEdt << groupEdt
               << illnessEdt << anotherEdt << hookyEdt;
 
+    setWindowIcon(QIcon(":/images/addEntries.png"));
     setWindowTitle(tr("Добавить запись"));
     setMaximumSize(550, 200);
     setMinimumSize(550, 200);
@@ -44,6 +46,9 @@ AddDialog::AddDialog(StudentAbsenceModel *model_, QWidget *parent)
     connectLineEdits();
     addLayouts();
 }
+
+AddDialog::~AddDialog()
+{}
 
 void AddDialog::createEntry()
 {
@@ -68,12 +73,14 @@ void AddDialog::createEntry()
                     QVariant(hookyEdt->text().toInt()), Qt::EditRole);
     }
     else
-        QMessageBox::information(this, "Внимание!", "Введены некорректные данные!", QMessageBox::Ok);
+        QMessageBox::information(this, tr("Внимание!"),
+                                 tr("Введены некорректные данные!"),
+                                 QMessageBox::Ok);
 }
 
 void AddDialog::changeNumFilledEdits()
 {
-    int numFilledEdits = 0;
+    auto numFilledEdits = 0;
 
     foreach (const QLineEdit* edt, listEdits) {
         if(!edt->text().isEmpty() && edt->graphicsEffect() == Q_NULLPTR)
@@ -151,7 +158,7 @@ void AddDialog::addLayouts()
 
 void AddDialog::addEffect(QWidget *widget)
 {
-    QGraphicsColorizeEffect *effect = new QGraphicsColorizeEffect(widget);
+    auto effect = new QGraphicsColorizeEffect(widget);
     effect->setColor(QColor(250, 0, 0));
     widget->setGraphicsEffect(effect);
 }
@@ -169,7 +176,7 @@ bool AddDialog::verifyEdits()
 {
     bool isCorrect = true;
 
-    bool *ok = new bool;
+    auto ok = true;
 
     if(!isName(surnameEdt->text()) || !surnameEdt->text().at(0).isUpper()){
         addEffect(surnameEdt);
@@ -186,32 +193,30 @@ bool AddDialog::verifyEdits()
         isCorrect = false;
     }
 
-    long long num = groupEdt->text().toLongLong(ok);
-    if(!(*ok) || num < 0 || groupEdt->text().length() != Group::getNumLetters()){
+    long long num = groupEdt->text().toLongLong(&ok);
+    if(!(ok) || num < 0 || groupEdt->text().length() != Group::getNumLetters()){
         addEffect(groupEdt);
         isCorrect = false;
     }
 
-    num = illnessEdt->text().toLongLong(ok);
-    if(!(*ok) || num < 0 || illnessEdt->text().length() > 4){
+    num = illnessEdt->text().toLongLong(&ok);
+    if(!(ok) || num < 0 || illnessEdt->text().length() > 4){
         addEffect(illnessEdt);
         isCorrect = false;
     }
 
-    num = anotherEdt->text().toLongLong(ok);
-    if(!(*ok) || num < 0 || anotherEdt->text().length() > 4){
+    num = anotherEdt->text().toLongLong(&ok);
+    if(!(ok) || num < 0 || anotherEdt->text().length() > 4){
         addEffect(anotherEdt);
         isCorrect = false;
     }
 
-    num = hookyEdt->text().toLongLong(ok);
-    if(!(*ok) || num < 0 || hookyEdt->text().length() > 4){
+    num = hookyEdt->text().toLongLong(&ok);
+    if(!(ok) || num < 0 || hookyEdt->text().length() > 4){
         addEffect(hookyEdt);
         isCorrect = false;
     }
 
-    delete ok;
     changeNumFilledEdits();
-
     return isCorrect;
 }

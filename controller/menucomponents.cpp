@@ -97,4 +97,3 @@ void MenuComponents::enableLastPage(bool valid)
 {
     lastPage->setEnabled(valid);
 }
-

@@ -4,10 +4,10 @@
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
     QApplication::setStyle(QStyleFactory::create("Fusion"));
-    StudentAbsenceTableApp w;
-    w.show();
+    StudentAbsenceTableApp studentTable;
+    studentTable.show();
 
-    return a.exec();
+    return app.exec();
 }

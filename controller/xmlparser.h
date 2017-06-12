@@ -1,12 +1,11 @@
-#ifndef XMLPARSER_H
-#define XMLPARSER_H
+#pragma once
+
+#include "../model/studentabsencemodel.h"
 
 #include <QException>
 #include <QString>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
-
-#include "../model/studentabsencemodel.h"
 
 class FileOpenException: public QException
 {
@@ -42,10 +41,7 @@ private:
     static const QString XML_TAG_ANOTHER;
     static const QString XML_TAG_HOOKY;
 
-    void writeEntry(QXmlStreamWriter *writer, const StudentEntry &entry);
+    void writeEntry(QXmlStreamWriter &writer, const StudentEntry &entry);
 
     StudentAbsenceModel *model;
 };
-
-#endif // XMLPARSER_H
-

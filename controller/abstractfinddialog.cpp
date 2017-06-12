@@ -1,23 +1,27 @@
 #include "abstractfinddialog.h"
+#include "../view/HierarchicalHeaderView.h"
 
 #include <QApplication>
+#include <QGraphicsColorizeEffect>
 #include <QDesktopWidget>
 #include <QLayout>
 #include <QMessageBox>
-#include <QGraphicsColorizeEffect>
 
 #include <algorithm>
 #include <functional>
+#include <cstdint>
+#include <limits>
+
 
 AbstractFindDialog::AbstractFindDialog(StudentAbsenceModel *model_, QWidget *parent)
     : QDialog(parent)
 {
     model = model_;
 
-    switcher = new QGroupBox("Условия поиска:", this);
-    firstPattern = new QRadioButton("Фамилия, группа", switcher);
-    secondPattern = new QRadioButton("Фамилия, вид пропуска", switcher);
-    thirdPattern = new QRadioButton("Фамилия, всего пропусков", switcher);
+    switcher = new QGroupBox(tr("Условия поиска:"), this);
+    firstPattern = new QRadioButton(tr("Фамилия, группа"), switcher);
+    secondPattern = new QRadioButton(tr("Фамилия, вид пропуска"), switcher);
+    thirdPattern = new QRadioButton(tr("Фамилия, всего пропусков"), switcher);
     firstPattern->setChecked(true);
 
     resultTable = new QTableView(this);
@@ -35,24 +39,24 @@ AbstractFindDialog::AbstractFindDialog(StudentAbsenceModel *model_, QWidget *par
     secondGroup = new QGroupBox(stackedWidget);
     thirdGroup = new QGroupBox(stackedWidget);
 
-    surnameLbl1 = new QLabel("Фамилия", this);
+    surnameLbl1 = new QLabel(tr("Фамилия"), this);
     surnameEdt1 = new QLineEdit(this);
-    groupLbl = new QLabel("Группа", this);
+    groupLbl = new QLabel(tr("Группа"), this);
     groupEdt = new QLineEdit(this);
 
-    surnameLbl2 = new QLabel("Фамилия", this);
-    absKindlbl = new QLabel("Вид пропуска", this);
-    numAbsLbl = new QLabel("Количество", this);
+    surnameLbl2 = new QLabel(tr("Фамилия"), this);
+    absKindlbl = new QLabel(tr("Вид пропуска"), this);
+    numAbsLbl = new QLabel(tr("Количество"), this);
     surnameEdt2 = new QLineEdit(this);
     absKindCmb = new QComboBox(this);
-    absKindCmb->addItem("Болезнь");
-    absKindCmb->addItem("Другое");
-    absKindCmb->addItem("Прогул");
+    absKindCmb->addItem(tr("Болезнь"));
+    absKindCmb->addItem(tr("Другое"));
+    absKindCmb->addItem(tr("Прогул"));
     numAbsEdt = new QLineEdit(this);
 
-    surnameLbl3 = new QLabel("Фамилия", this);
-    lowBoundLbl = new QLabel("От", this);
-    topBoundLbl = new QLabel("До", this);
+    surnameLbl3 = new QLabel(tr("Фамилия"), this);
+    lowBoundLbl = new QLabel(tr("От"), this);
+    topBoundLbl = new QLabel(tr("До"), this);
     surnameEdt3 = new QLineEdit(this);
     lowBoundEdt = new QLineEdit(this);
     topBoundEdt = new QLineEdit(this);
@@ -63,9 +67,9 @@ AbstractFindDialog::AbstractFindDialog(StudentAbsenceModel *model_, QWidget *par
 
     configStackedWidget();
 
-    okBtn         = new QPushButton("OK", this);
+    okBtn         = new QPushButton(tr("OK"), this);
     okBtn->setEnabled(false);
-    closeBtn        = new QPushButton("Закрыть", this);
+    closeBtn        = new QPushButton(tr("Закрыть"), this);
 
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     setMinimumSize(500, 200);
@@ -294,9 +298,9 @@ bool AbstractFindDialog::isName(const QString& text) const
 
 bool AbstractFindDialog::verifyEdits()
 {
-    bool isCorrect = true;
-    bool *ok = new bool;
-    long long num = 0;
+    auto isCorrect = true;
+    auto ok = true;
+    auto num = 0;
 
     switch (stackedWidget->currentIndex()) {
     case FIRST:
@@ -304,8 +308,8 @@ bool AbstractFindDialog::verifyEdits()
             addEffect(surnameEdt1);
             isCorrect = false;
         }
-        num = groupEdt->text().toLongLong(ok);
-        if(!(*ok) || num < 0 || groupEdt->text().length() != Group::getNumLetters()){
+        num = groupEdt->text().toLongLong(&ok);
+        if(!(ok) || num < 0 || groupEdt->text().length() != Group::getNumLetters()){
             addEffect(groupEdt);
             isCorrect = false;
         }
@@ -315,8 +319,8 @@ bool AbstractFindDialog::verifyEdits()
             addEffect(surnameEdt2);
             isCorrect = false;
         }
-        num = numAbsEdt->text().toLongLong(ok);
-        if(!(*ok) || num < 0 || numAbsEdt->text().length() > 4){
+        num = numAbsEdt->text().toLongLong(&ok);
+        if(!(ok) || num < 0 || numAbsEdt->text().length() > 4){
             addEffect(numAbsEdt);
             isCorrect = false;
         }
@@ -326,14 +330,14 @@ bool AbstractFindDialog::verifyEdits()
             addEffect(surnameEdt3);
             isCorrect = false;
         }
-        num = lowBoundEdt->text().toLongLong(ok);
-        if(!(*ok) || num < 0 || num > INT16_MAX){
+        num = lowBoundEdt->text().toLongLong(&ok);
+        if(!(ok) || num < 0 || num >  std::numeric_limits<std::int32_t>::max()){
             addEffect(lowBoundEdt);
             isCorrect = false;
         }
 
-        num = topBoundEdt->text().toLongLong(ok);
-        if(!(*ok) || num < 0 || num > INT16_MAX){
+        num = topBoundEdt->text().toLongLong(&ok);
+        if(!(ok) || num < 0 || num >  std::numeric_limits<std::int32_t>::max()){
             addEffect(topBoundEdt);
             isCorrect = false;
         }
@@ -345,7 +349,6 @@ bool AbstractFindDialog::verifyEdits()
         break;
     }
 
-    delete ok;
     changeNumFilledEdits();
     return isCorrect;
 }

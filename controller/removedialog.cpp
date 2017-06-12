@@ -10,6 +10,7 @@ RemoveDialog::RemoveDialog(StudentAbsenceModel *model, QWidget *parent)
     : AbstractFindDialog(model, parent)
 {
     setWindowTitle("Удалить записи");
+    setWindowIcon(QIcon(":/images/removeEntries.png"));
     okBtn->setText("Удалить");
 }
 
@@ -22,7 +23,7 @@ void RemoveDialog::handleOkBtn()
     if(verifyEdits())
     {
         StudentAbsenceModel::students &studentList = model->getStudentEntryList();
-        qint64 length_before = model->getStudentEntryList().length();
+        auto length_before = model->getStudentEntryList().length();
 
         std::function<bool (const StudentEntry &)> cond = condition();
 
@@ -30,11 +31,13 @@ void RemoveDialog::handleOkBtn()
                     std::remove_if(studentList.begin(),studentList.end(), cond),
                     studentList.end());
 
-        qint64 length_after = model->getStudentEntryList().length();
+        auto length_after = model->getStudentEntryList().length();
         model->removeRows(length_after, length_before - length_after, QModelIndex());
 
         if(length_before - length_after == 0){
-            QMessageBox::information(this, "Внимание!", "Данных по запросу не найдено", QMessageBox::Ok);
+            QMessageBox::information(this, tr("Внимание!"),
+                                     tr("Данных по запросу не найдено"),
+                                     QMessageBox::Ok);
         }
         else
             QMessageBox::information(
@@ -44,5 +47,7 @@ void RemoveDialog::handleOkBtn()
                 QMessageBox::Ok);
     }
     else
-        QMessageBox::information(this, "Внимание!", "Введены некорректные данные!", QMessageBox::Ok);
+        QMessageBox::information(this, tr("Внимание!"),
+                                 tr("Введены некорректные данные!"),
+                                 QMessageBox::Ok);
 }

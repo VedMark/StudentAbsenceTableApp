@@ -3,14 +3,18 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QMessageBox>
-#include <QTime>
+
 
 FindDialog::FindDialog(StudentAbsenceModel *model, QWidget *parent)
     :AbstractFindDialog(model, parent)
 {
-    okBtn->setText("Найти");
+    okBtn->setText(tr("Найти"));
+    setWindowIcon(QIcon(":/images/findEntries.png"));
     setWindowTitle(tr("Найти записи"));
 }
+
+FindDialog::~FindDialog()
+{}
 
 void FindDialog::handleOkBtn()
 {
@@ -25,17 +29,20 @@ void FindDialog::handleOkBtn()
                      cond);
 
         if(searchResult.isEmpty()){
-            QMessageBox::information(this, "Внимание!", "Данных по запросу не найдено", QMessageBox::Ok);
+            QMessageBox::information(this, tr("Внимание!"),
+                                     tr("Данных по запросу не найдено"),
+                                     QMessageBox::Ok);
             resultTable->setVisible(false);
             resize(sizeHint());
             move((QApplication::desktop()->width() - width()) / 2,
                  (QApplication::desktop()->height() - height()) / 2);
         }
         else{
-            QMessageBox::information(this, "Внимание!", "время поиска: ", QMessageBox::Ok);
             displayStudentEntryList(searchResult);
         }
     }
     else
-        QMessageBox::information(this, "Внимание!", "Введены некорректные данные!", QMessageBox::Ok);
+        QMessageBox::information(this, tr("Внимание!"),
+                                 tr("Введены некорректные данные!"),
+                                 QMessageBox::Ok);
 }

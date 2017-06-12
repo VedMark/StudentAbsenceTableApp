@@ -6,6 +6,9 @@ ModelController::ModelController(StudentAbsenceModel *controlModel)
     model = controlModel;
 }
 
+ModelController::~ModelController()
+{}
+
 StudentAbsenceModel *ModelController::getModel() const
 {
     return model;

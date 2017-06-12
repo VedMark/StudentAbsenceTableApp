@@ -1,12 +1,11 @@
-#ifndef ADDDIALOG_H
-#define ADDDIALOG_H
+#pragma once
+
+#include "../model/studentabsencemodel.h"
 
 #include <QDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
-
-#include "../model/studentabsencemodel.h"
 
 
 class AddDialog : public QDialog
@@ -15,6 +14,7 @@ class AddDialog : public QDialog
 
 public:
     AddDialog(StudentAbsenceModel *model, QWidget *parent = Q_NULLPTR);
+    ~AddDialog();
 
 signals:
     void numFilledEditsChanged(int);
@@ -60,5 +60,3 @@ private:
 
     QList<QLineEdit*> listEdits;
 };
-
-#endif // ADDDIALOG_H

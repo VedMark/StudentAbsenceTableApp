@@ -1,6 +1,12 @@
-#ifndef QTABLE_H
-#define QTABLE_H
+#pragma once
 
+#include "../model/studentabsencemodel.h"
+#include "../view/HierarchicalHeaderView.h"
+#include "../view/proxymodel.h"
+#include "../controller/adddialog.h"
+#include "../controller/finddialog.h"
+#include "../controller/modelcontroller.h"
+#include "../controller/removedialog.h"
 
 #include <QLabel>
 #include <QLineEdit>
@@ -11,13 +17,6 @@
 #include <QTableView>
 #include <QWidget>
 
-#include "../model/studentabsencemodel.h"
-#include "../view/HierarchicalHeaderView.h"
-#include "../view/proxymodel.h"
-#include "../controller/adddialog.h"
-#include "../controller/finddialog.h"
-#include "../controller/modelcontroller.h"
-#include "../controller/removedialog.h"
 
 class StudentAbsenceTableApp : public QMainWindow
 {
@@ -35,6 +34,7 @@ public:
 protected:
     void contextMenuEvent(QContextMenuEvent *);
     void closeEvent(QCloseEvent *);
+    void paintEvent(QPaintEvent *);
     void resizeEvent(QResizeEvent *);
 
     bool loadFile(const QString &fileName);
@@ -91,5 +91,3 @@ private:
     QLabel *entriesPerPageLbl;
     QLabel *entriesLbl;
 };
-
-#endif // QTABLE_H

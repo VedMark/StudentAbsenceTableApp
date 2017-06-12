@@ -1,7 +1,5 @@
-#include <QtCore>
-#include <QtAlgorithms>
-
 #include "studentabsencemodel.h"
+
 
 StudentAbsenceModel::StudentAbsenceModel(QObject *parent)
     : QAbstractTableModel(parent)
@@ -9,6 +7,9 @@ StudentAbsenceModel::StudentAbsenceModel(QObject *parent)
     horizontalHeader = new QStandardItemModel(this);
     createHorizontalHeader();
 }
+
+StudentAbsenceModel::~StudentAbsenceModel()
+{}
 
 QVariant StudentAbsenceModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
@@ -32,6 +33,16 @@ QModelIndex StudentAbsenceModel::index(int row, int column, const QModelIndex &p
     if(hasIndex(row, column, parent))
         return createIndex(row, column, (void*)(&studentEntryList.at(row)));
     return QModelIndex();
+}
+
+int StudentAbsenceModel::rowCount(const QModelIndex &parent) const{
+    Q_UNUSED(parent)
+    return studentEntryList.length();
+}
+
+int StudentAbsenceModel::columnCount(const QModelIndex &parent) const{
+    Q_UNUSED(parent);
+    return LAST;
 }
 
 QVariant StudentAbsenceModel::data(const QModelIndex &index, int role) const
@@ -140,22 +151,22 @@ void StudentAbsenceModel::createHorizontalHeader()
     horizontalHeader->setItem(0, 0, new QStandardItem(tr("Ф.И.О. студента")));
     horizontalHeader->setItem(0, 1, new QStandardItem(tr("группа")));
 
-    QStandardItem *absence_root_item = new QStandardItem(tr("число пропусков занятий за год"));
-    QList<QStandardItem*> absence_list = QList<QStandardItem*>();
+    auto absence_root_item = new QStandardItem(tr("число пропусков занятий за год"));
+    auto absence_list = QList<QStandardItem*>();
 
-    absence_list.append(new QStandardItem("по болезни"));
+    absence_list.append(new QStandardItem(tr("по болезни")));
     absence_root_item->appendColumn(absence_list);
     absence_list.clear();
 
-    absence_list.append(new QStandardItem("по другим причинам"));
+    absence_list.append(new QStandardItem(tr("по другим причинам")));
     absence_root_item->appendColumn(absence_list);
     absence_list.clear();
 
-    absence_list.append(new QStandardItem("без уважительной причины"));
+    absence_list.append(new QStandardItem(tr("без уважительной причины")));
     absence_root_item->appendColumn(absence_list);
     absence_list.clear();
 
-    absence_list.append(new QStandardItem("итого"));
+    absence_list.append(new QStandardItem(tr("итого")));
     absence_root_item->appendColumn(absence_list);
     absence_list.clear();
 
@@ -188,6 +199,9 @@ RussianFullName &RussianFullName::operator=(const RussianFullName & anotherName)
     return *this;
 }
 
+RussianFullName::~RussianFullName()
+{}
+
 
 qint8 Group::numLetters = 6;
 
@@ -204,6 +218,9 @@ Group &Group::operator=(const Group &anotherGroup)
     value = anotherGroup.value;
     return *this;
 }
+
+Group::~Group()
+{}
 
 bool Group::isNumber(const QString & source) const
 {
@@ -236,6 +253,9 @@ Absence &Absence::operator=(const Absence &anotherAbsence)
     hooky = anotherAbsence.hooky;
     return *this;
 }
+
+Absence::~Absence()
+{}
 
 
 

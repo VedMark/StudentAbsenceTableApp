@@ -1,5 +1,6 @@
-#ifndef FINDDIALOG_H
-#define FINDDIALOG_H
+#pragma once
+
+#include "../model/studentabsencemodel.h"
 
 #include <QComboBox>
 #include <QDialog>
@@ -12,9 +13,7 @@
 #include <QStackedWidget>
 #include <QTableView>
 
-#include "../model/studentabsencemodel.h"
-#include "../view/HierarchicalHeaderView.h"
-
+#include <functional>
 
 class AbstractFindDialog : public QDialog
 {
@@ -97,5 +96,3 @@ private:
     void connectLineEdits();
     void addLayouts();
 };
-
-#endif // FINDDIALOG_H

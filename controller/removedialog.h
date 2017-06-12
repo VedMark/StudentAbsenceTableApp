@@ -1,5 +1,4 @@
-#ifndef REMOVEDIALOG_H
-#define REMOVEDIALOG_H
+#pragma once
 
 #include "../controller/abstractfinddialog.h"
 
@@ -17,5 +16,3 @@ protected:
 protected slots:
     void handleOkBtn();
 };
-
-#endif // REMOVEDIALOG_H

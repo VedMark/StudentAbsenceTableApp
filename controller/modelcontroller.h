@@ -1,7 +1,4 @@
-#ifndef MODELCONTROLLER_H
-#define MODELCONTROLLER_H
-
-#include <QtCore>
+#pragma once
 
 #include "../model/studentabsencemodel.h"
 
@@ -10,6 +7,7 @@ class ModelController
 {
 public:
     ModelController(StudentAbsenceModel *controlModel = Q_NULLPTR);
+    ~ModelController();
 
     StudentAbsenceModel *getModel() const;
     void setModel(StudentAbsenceModel *value);
@@ -21,5 +19,3 @@ public:
 private:
     StudentAbsenceModel *model;
 };
-
-#endif // MODELCONTROLLER_H

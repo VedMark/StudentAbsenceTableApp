@@ -1,7 +1,7 @@
-#ifndef MENUCOMPONENTS_H
-#define MENUCOMPONENTS_H
+#pragma once
 
 #include <QAction>
+
 
 class MenuComponents
 {
@@ -39,6 +39,3 @@ private:
     MenuComponents(const MenuComponents*) = delete;
     MenuComponents& operator=(const MenuComponents*) = delete;
 };
-
-
-#endif // MENUCOMPONENTS_H

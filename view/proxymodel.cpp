@@ -1,15 +1,30 @@
 #include "proxymodel.h"
-
-#include <algorithm>
-#include <iterator>
-
 #include "../controller/menucomponents.h"
+
 
 ProxyModel::ProxyModel(QObject *parent)
     : QIdentityProxyModel(parent)
 {
-    entriesPerPage = 5;
+    entriesPerPage = 20;
     page = 1;
+}
+
+ProxyModel::~ProxyModel()
+{}
+
+int ProxyModel::rowCount(const QModelIndex &parent) const{
+    Q_UNUSED(parent)
+    if(!sourceModel())
+        return 0;
+
+    return entriesPerPage * page <= sourceModel()->rowCount()
+            ? entriesPerPage
+            : sourceModel()->rowCount() - entriesPerPage * (page - 1);
+}
+
+int ProxyModel::columnCount(const QModelIndex &parent) const{
+    Q_UNUSED(parent);
+    return StudentAbsenceModel::LAST;
 }
 
 QModelIndex ProxyModel::mapFromSource(const QModelIndex &sourceIndex) const
@@ -35,11 +50,17 @@ QModelIndex ProxyModel::mapToSource(const QModelIndex &proxyIndex) const
 
 bool ProxyModel::showPage(qint64 page_)
 {
-    if(page > maxPage() || page < 1)
+    if(page_ > maxPage() || page_ < 1)
         return false;
     page = page_;
     emit pageChanged(page_);
     return true;
+}
+
+void ProxyModel::resetModel()
+{
+    beginResetModel();
+    endResetModel();
 }
 
 qint64 ProxyModel::maxPage()

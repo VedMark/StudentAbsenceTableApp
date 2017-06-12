@@ -1,11 +1,9 @@
-#ifndef STUDENTABSENCEMODEL_H
-#define STUDENTABSENCEMODEL_H
+#pragma once
 
 #include <QAbstractTableModel>
 #include <QList>
 #include <QStandardItemModel>
 
-#include <QDebug>
 
 class RussianFullName;
 class Group;
@@ -30,21 +28,15 @@ public:
     };
 
     explicit StudentAbsenceModel(QObject *parent = 0);
+    ~StudentAbsenceModel();
 
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
     bool hasIndex(int row, int column, const QModelIndex &parent) const;
-
     QModelIndex index(int row, int column, const QModelIndex &parent) const override;
 
-    inline int rowCount(const QModelIndex &parent = QModelIndex()) const override{
-        Q_UNUSED(parent)
-        return studentEntryList.length();
-    }
-    inline int columnCount(const QModelIndex &parent = QModelIndex()) const override{
-        Q_UNUSED(parent);
-        return LAST;
-    }
+    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
@@ -70,7 +62,6 @@ public:
                     index(0, 0, QModelIndex()),
                     index(studentEntryList.size(), LAST, QModelIndex())
                     );
-        //qDebug() << rowCount();
     }
 
 private:
@@ -93,6 +84,7 @@ public:
     explicit RussianFullName(QString surname_, QString name_, QString patronimic_);
     RussianFullName(const RussianFullName&);
     RussianFullName &operator=(const RussianFullName&);
+    ~RussianFullName();
 
     inline QString getFullName() const
     { return surname + " " + name + " " + patronymic; }
@@ -129,6 +121,7 @@ public:
     explicit Group(QString val = QString("000000"));
     Group(const Group&);
     Group &operator=(const Group&);
+    ~Group();
 
     inline QString getValue() const
     { return value; }
@@ -157,6 +150,7 @@ public:
     explicit Absence(qint16 illness_, qint16 another_, qint16 hooky_);
     Absence(const Absence&);
     Absence &operator=(const Absence&);
+    ~Absence();
 
     inline qint16 getIllness() const
     { return illness; }
@@ -188,5 +182,3 @@ struct StudentEntry{
     explicit StudentEntry(const RussianFullName&, const Group &group, const Absence&);
     StudentEntry(const StudentEntry&);
 };
-
-#endif // STUDENTABSENCEMODEL_H

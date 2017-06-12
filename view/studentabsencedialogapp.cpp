@@ -1,3 +1,7 @@
+#include "studentabsencedialogapp.h"
+#include "../controller/xmlparser.h"
+#include "../controller/menucomponents.h"
+
 #include <QContextMenuEvent>
 #include <QFileDialog>
 #include <QGraphicsColorizeEffect>
@@ -6,13 +10,7 @@
 #include <QScrollBar>
 #include <QStatusBar>
 #include <QToolBar>
-#include <iterator>
 
-#include <QTime>
-
-#include "studentabsencedialogapp.h"
-#include "../controller/xmlparser.h"
-#include "../controller/menucomponents.h"
 
 StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     : QMainWindow(parent)
@@ -51,7 +49,8 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     setMinimumSize(800, 600);
     showMaximized();
 
-    setWindowTitle(QStringLiteral("Таблица пропусков студентов"));
+    setWindowIcon(QIcon(":images/spreadsheet.png"));
+    setWindowTitle(tr("Таблица пропусков студентов"));
 }
 
 StudentAbsenceTableApp::~StudentAbsenceTableApp()
@@ -69,6 +68,12 @@ void StudentAbsenceTableApp::closeEvent(QCloseEvent *)
     close();
 }
 
+void StudentAbsenceTableApp::paintEvent(QPaintEvent *event)
+{
+    proxyModel->resetModel();
+    QMainWindow::paintEvent(event);
+}
+
 void StudentAbsenceTableApp::resizeEvent(QResizeEvent *)
 {
     view->setColumnWidth(0, width() / 3);
@@ -82,7 +87,7 @@ bool StudentAbsenceTableApp::newFile()
 {
     if(!documentModified || agreedToContinue()){
         controller->clearModel();
-        setCurrentFileName(QStringLiteral(""));
+        setCurrentFileName(tr(""));
         documentModified = false;
         return true;
     }
@@ -92,9 +97,9 @@ bool StudentAbsenceTableApp::newFile()
 bool StudentAbsenceTableApp::open()
 {
     if(agreedToContinue()){
-        QString openFileName = QFileDialog::getOpenFileName(this,
+        auto openFileName = QFileDialog::getOpenFileName(this,
                                                 tr("Открыть файл"),
-                                                QStringLiteral("/home/vedmark"),
+                                                tr("/home/vedmark"),
                                                 tr("Файл данных (*.xml)"));
         if(!openFileName.isEmpty())
             return loadFile(openFileName);
@@ -113,9 +118,9 @@ bool StudentAbsenceTableApp::save()
 
 bool StudentAbsenceTableApp::saveAs()
 {
-    QString fileName = QFileDialog::getSaveFileName(this,
+    auto fileName = QFileDialog::getSaveFileName(this,
                                                 tr("Сохранить файл"),
-                                                QStringLiteral("/home/vedmark"),
+                                                tr("/home/vedmark"),
                                                 tr("Файл данных (*.xml)"));
     if(fileName.isEmpty())
         return false;
@@ -126,30 +131,28 @@ bool StudentAbsenceTableApp::saveAs()
 
 bool StudentAbsenceTableApp::loadFile(const QString &fileName)
 {
-    XMLParser *xmlParser = new XMLParser(model);
+    auto xmlParser = XMLParser(model);
     try
     {
-        xmlParser->read(fileName);
+        xmlParser.read(fileName);
         setCurrentFileName(fileName);
         statusBar()->showMessage(tr("Файл загружен"), 2000);
         documentModified = false;
     }
     catch(FileOpenException)
     {
-        QMessageBox::warning(this, QStringLiteral("Ошибка!"),
-                             QStringLiteral("Ошибка чтения файла!"),
+        QMessageBox::warning(this, tr("Ошибка!"),
+                             tr("Ошибка чтения файла!"),
                              QMessageBox::Ok);
-        delete xmlParser;
-        statusBar()->showMessage(QStringLiteral("Загрузка отменена"), 2000);
+        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
         return false;
     }
     catch(FileReadException)
     {
-        QMessageBox::warning(this, QStringLiteral("Ошибка!"),
-                             QStringLiteral("Ошибка чтения файла!"),
+        QMessageBox::warning(this, tr("Ошибка!"),
+                             tr("Ошибка чтения файла!"),
                              QMessageBox::Ok);
-        delete xmlParser;
-        statusBar()->showMessage(QStringLiteral("Загрузка отменена"), 2000);
+        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
         return false;
     }
 
@@ -159,35 +162,32 @@ bool StudentAbsenceTableApp::loadFile(const QString &fileName)
 
 bool StudentAbsenceTableApp::saveFile(const QString &fileName)
 {
-    XMLParser *xmlParser = new XMLParser(model);
+    auto xmlParser = XMLParser(model);
     try
     {
-        xmlParser->write(fileName);
+        xmlParser.write(fileName);
 
         setCurrentFileName(fileName);
-        statusBar()->showMessage(QStringLiteral("Файл сохранён"), 2000);
+        statusBar()->showMessage(tr("Файл сохранён"), 2000);
         documentModified = false;
     }
     catch(FileOpenException)
     {
-        QMessageBox::warning(this, QStringLiteral("Ошибка!"),
-                             QStringLiteral("Ошибка открытия файла!"),
+        QMessageBox::warning(this, tr("Ошибка!"),
+                             tr("Ошибка открытия файла!"),
                              QMessageBox::Ok);
-        delete xmlParser;
-        statusBar()->showMessage(QStringLiteral("Загрузка отменена"), 2000);
+        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
         return false;
     }
     catch(FileReadException)
     {
-        QMessageBox::warning(this, QStringLiteral("Ошибка!"),
-                             QStringLiteral("Ошибка открытия файла!"),
+        QMessageBox::warning(this, tr("Ошибка!"),
+                             tr("Ошибка открытия файла!"),
                              QMessageBox::Ok);
-        delete xmlParser;
-        statusBar()->showMessage(QStringLiteral("Загрузка отменена"), 2000);
+        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
         return false;
     }
 
-    delete xmlParser;
     return true;
 }
 
@@ -195,7 +195,7 @@ bool StudentAbsenceTableApp::agreedToContinue()
 {
     if (!documentModified)
          return true;
-    QMessageBox::StandardButton answer = QMessageBox::warning(
+    auto answer = QMessageBox::warning(
                 this,
                 tr("Документ был изменён"),
                 tr("Сохранить изменения?"),
@@ -253,27 +253,27 @@ void StudentAbsenceTableApp::createMainWidget()
 
     prevPageBtn = new QPushButton(QIcon(":/images/prevPage.png"), "", this);
     prevPageBtn->addAction(MenuComponents::instance().prevPage);
-    prevPageBtn->setToolTip(QStringLiteral("Перейти на предыдущую страницу"));
+    prevPageBtn->setToolTip(tr("Перейти на предыдущую страницу"));
     prevPageBtn->setEnabled(false);
 
     nextPageBtn = new QPushButton(QIcon(":/images/nextPage.png"), "", this);
     nextPageBtn->addAction(MenuComponents::instance().nextPage);
-    nextPageBtn->setToolTip(QStringLiteral("Перейти на следующую страницу"));
+    nextPageBtn->setToolTip(tr("Перейти на следующую страницу"));
     nextPageBtn->setEnabled(false);
 
     firstPageBtn = new QPushButton(QIcon(":/images/firstPage.png"), "", this);
     firstPageBtn->addAction(MenuComponents::instance().firstPage);
-    firstPageBtn->setToolTip(QStringLiteral("Перейти на первую страницу"));
+    firstPageBtn->setToolTip(tr("Перейти на первую страницу"));
     firstPageBtn->setEnabled(false);
 
     lastPageBtn = new QPushButton(QIcon(":/images/lastPage.png"), "", this);
     lastPageBtn->addAction(MenuComponents::instance().lastPage);
-    lastPageBtn->setToolTip(QStringLiteral("Перейти на последнюю страницу"));
+    lastPageBtn->setToolTip(tr("Перейти на последнюю страницу"));
     lastPageBtn->setEnabled(false);
 
     goToPageBtn = new QPushButton(QIcon(":/images/goToPage.png"), "Перейти", this);
     goToPageBtn->addAction(MenuComponents::instance().goToPage);
-    goToPageBtn->setToolTip(QStringLiteral("Перейти на страницу"));
+    goToPageBtn->setToolTip(tr("Перейти на страницу"));
     goToPageBtn->setEnabled(true);
     goToPageEdt = new QLineEdit(this);
     goToPageEdt->setMaximumWidth(50);
@@ -283,7 +283,7 @@ void StudentAbsenceTableApp::createMainWidget()
 
     entriesPerPageBtn = new QPushButton(QIcon(":/images/entriesPerPage.png"), "Изменить", this);
     entriesPerPageBtn->addAction(MenuComponents::instance().entriesPerPage);
-    entriesPerPageBtn->setToolTip(QStringLiteral("Изменить количество записей на странице"));
+    entriesPerPageBtn->setToolTip(tr("Изменить количество записей на странице"));
     entriesPerPageBtn->setEnabled(true);
     entriesPerPageEdt = new QLineEdit(this);
     entriesPerPageEdt->setMaximumWidth(50);
@@ -298,22 +298,26 @@ void StudentAbsenceTableApp::createMainWidget()
     buttonsLayout->addWidget(nextPageBtn);
     buttonsLayout->addWidget(lastPageBtn);
     buttonsLayout->addStretch(1);
-    buttonsLayout->addWidget(new QLabel("Страниц:", this));
+    buttonsLayout->addWidget(new QLabel(tr("Страниц:"), this));
     buttonsLayout->addWidget(pageLbl);
     buttonsLayout->addStretch(1);
-    buttonsLayout->addWidget(new QLabel("Текущая:", this));
+    buttonsLayout->addWidget(new QLabel(tr("Текущая:"), this));
     buttonsLayout->addWidget(currentPageLbl);
     buttonsLayout->addWidget(goToPageEdt);
     buttonsLayout->addWidget(goToPageBtn);
     buttonsLayout->addStretch(1);
-    buttonsLayout->addWidget(new QLabel("Записей:", this));
+    buttonsLayout->addWidget(new QLabel(tr("Записей:"), this));
     buttonsLayout->addWidget(entriesLbl);
     buttonsLayout->addStretch(1);
-    buttonsLayout->addWidget(new QLabel("Записей на странице:", this));
+    buttonsLayout->addWidget(new QLabel(tr("Записей на странице:"), this));
     buttonsLayout->addWidget(entriesPerPageLbl);
     buttonsLayout->addWidget(entriesPerPageEdt);
     buttonsLayout->addWidget(entriesPerPageBtn);
     buttonsLayout->addStretch(20);
+
+    setTabOrder(goToPageEdt, goToPageBtn);
+    setTabOrder(goToPageBtn, entriesPerPageEdt);
+    setTabOrder(entriesPerPageEdt, entriesPerPageBtn);
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
 
@@ -489,9 +493,9 @@ void StudentAbsenceTableApp::setConnections()
 
     connect(goToPageBtn, &QPushButton::clicked, [&] {
         auto ok = true;
-        qint64 num = goToPageEdt->text().toLongLong(&ok);
+        auto num = goToPageEdt->text().toLongLong(&ok);
         if(!(ok) || num < 1 || num > proxyModel->maxPage()){
-            QGraphicsColorizeEffect *effect = new QGraphicsColorizeEffect(goToPageBtn);
+            auto effect = new QGraphicsColorizeEffect(goToPageBtn);
             effect->setColor(QColor(250, 0, 0));
             goToPageEdt->setGraphicsEffect(effect);
             return;
@@ -508,7 +512,7 @@ void StudentAbsenceTableApp::setConnections()
         auto ok = true;
         qint64 num = entriesPerPageEdt->text().toLongLong(&ok);
         if(!(ok) || num < 1){
-            QGraphicsColorizeEffect *effect = new QGraphicsColorizeEffect(goToPageBtn);
+            auto effect = new QGraphicsColorizeEffect(goToPageBtn);
             effect->setColor(QColor(250, 0, 0));
             entriesPerPageEdt->setGraphicsEffect(effect);
             return;
