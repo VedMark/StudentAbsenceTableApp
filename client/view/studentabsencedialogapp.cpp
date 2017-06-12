@@ -1,6 +1,7 @@
 #include "studentabsencedialogapp.h"
 #include "../controller/xmlparser.h"
 #include "../controller/menucomponents.h"
+#include "../studentabsenceclient.h"
 
 #include <QContextMenuEvent>
 #include <QFileDialog>
@@ -246,6 +247,12 @@ void StudentAbsenceTableApp::removeEntry()
     removeDialog->activateWindow();
 }
 
+void StudentAbsenceTableApp::connectToServer()
+{
+    auto client = new StudentAbsenceClient("Hello", 2323);
+    client->show();
+}
+
 void StudentAbsenceTableApp::createMainWidget()
 {
     mainWidget = new QWidget(this);
@@ -368,6 +375,10 @@ void StudentAbsenceTableApp::createMenu()
     watchMenu->addAction(MenuComponents::instance().lastPage);
     menuBar->addMenu(watchMenu);
 
+    QMenu *serverMenu = new QMenu(tr("&Сервер"), menuBar);
+    serverMenu->addAction(MenuComponents::instance().connectToServer);
+    menuBar->addMenu(serverMenu);
+
     setMenuBar(menuBar);
 }
 
@@ -447,6 +458,8 @@ void StudentAbsenceTableApp::setConnections()
         MenuComponents::instance().enableLastPage(false);
         view->setFocus();
     });
+
+    connect(MenuComponents::instance().connectToServer, SIGNAL( triggered(bool) ), SLOT( connectToServer() ) );
 
     std::function<void ()> enableButtons = [&] {
         if(proxyModel->getPage() >= proxyModel->maxPage()){

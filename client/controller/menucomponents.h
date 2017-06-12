@@ -25,6 +25,8 @@ public:
     QAction *findEntries;
     QAction *removeEntries;
 
+    QAction *connectToServer;
+
 public slots:
     void enablePrevPage(bool valid);
     void enableNextPage(bool valid);

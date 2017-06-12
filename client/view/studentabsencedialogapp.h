@@ -52,6 +52,8 @@ protected slots:
     void findEntry();
     void removeEntry();
 
+    void connectToServer();
+
 private:
     void createMainWidget();
     void createToolBar();

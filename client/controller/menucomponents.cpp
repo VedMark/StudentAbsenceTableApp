@@ -56,6 +56,9 @@ MenuComponents::MenuComponents()
 
     removeEntries = new QAction(QObject::tr("&Удалить"), Q_NULLPTR);
     removeEntries->setIcon(QIcon(":/images/removeEntries.png"));
+
+    connectToServer = new QAction(QObject::tr("&Соединить"), Q_NULLPTR);
+    connectToServer->setIcon(QIcon(":/images/connectToServer.png"));
 }
 
 MenuComponents::~MenuComponents()
@@ -76,6 +79,8 @@ MenuComponents::~MenuComponents()
     delete addEntries;
     delete findEntries;
     delete removeEntries;
+
+    delete connectToServer;
 }
 
 void MenuComponents::enablePrevPage(bool valid)
