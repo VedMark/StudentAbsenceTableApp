@@ -54,6 +54,9 @@ public:
 
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 
+    inline const StudentEntry& at(int row) const
+    { return studentEntryList.at(row); }
+
     inline qint64 entriesSize() const
     { return studentEntryList.size(); }
 

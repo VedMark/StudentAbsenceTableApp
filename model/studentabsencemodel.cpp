@@ -130,9 +130,9 @@ bool StudentAbsenceModel::removeRows(int row, int count, const QModelIndex &pare
 Qt::ItemFlags StudentAbsenceModel::flags(const QModelIndex &index) const
 {
     if (!index.isValid())
-        return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable;
+        return Qt::ItemIsEnabled;
 
-    return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable;
+    return QAbstractTableModel::flags(index);
 }
 
 void StudentAbsenceModel::createHorizontalHeader()

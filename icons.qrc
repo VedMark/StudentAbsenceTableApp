@@ -11,5 +11,7 @@
 
 	<file>images/prevPage.png</file>
 	<file>images/nextPage.png</file>
+	<file>images/firstPage.png</file>
+	<file>images/lastPage.png</file>
 </qresource>
 </RCC>

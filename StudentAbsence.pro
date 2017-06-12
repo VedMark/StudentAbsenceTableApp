@@ -19,7 +19,6 @@ SOURCES += main.cpp\
     model/studentabsencemodel.cpp \
     view/HierarchicalHeaderView.cpp \
     view/studentabsencedialogapp.cpp \
-    view/studenttableview.cpp \
     controller/adddialog.cpp \
     controller/modelcontroller.cpp \
     controller/menucomponents.cpp \
@@ -33,7 +32,6 @@ HEADERS  += \
     model/studentabsencemodel.h \
     view/HierarchicalHeaderView.h \
     view/studentabsencedialogapp.h \
-    view/studenttableview.h \
     controller/adddialog.h \
     controller/modelcontroller.h \
     controller/menucomponents.h \

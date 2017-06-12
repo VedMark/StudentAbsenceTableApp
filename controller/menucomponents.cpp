@@ -38,6 +38,16 @@ MenuComponents::MenuComponents()
     nextPage->setShortcut(QKeySequence::Forward);
     nextPage->setIcon(QIcon(":/images/nextPage.png"));
 
+    firstPage = new QAction(QObject::tr("&Первая страница"), Q_NULLPTR);
+    firstPage->setIcon(QIcon(":/images/firstPage.png"));
+
+    lastPage = new QAction(QObject::tr("&Последняя страница"), Q_NULLPTR);
+    lastPage->setIcon(QIcon(":/images/lastPage.png"));
+
+    goToPage = new QAction(QObject::tr("&Перейти к странице"), Q_NULLPTR);
+
+    entriesPerPage = new QAction(QObject::tr("&Изменить количество записей на странице"), Q_NULLPTR);
+
     addEntries = new QAction(QObject::tr("&Добавить"), Q_NULLPTR);
     addEntries->setIcon(QIcon(":/images/addEntries.png"));
 
@@ -58,7 +68,33 @@ MenuComponents::~MenuComponents()
 
     delete prevPage;
     delete nextPage;
+    delete firstPage;
+    delete lastPage;
+    delete goToPage;
+    delete entriesPerPage;
 
+    delete addEntries;
     delete findEntries;
     delete removeEntries;
 }
+
+void MenuComponents::enablePrevPage(bool valid)
+{
+    prevPage->setEnabled(valid);
+}
+
+void MenuComponents::enableNextPage(bool valid)
+{
+    nextPage->setEnabled(valid);
+}
+
+void MenuComponents::enableFirstPage(bool valid)
+{
+    firstPage->setEnabled(valid);
+}
+
+void MenuComponents::enableLastPage(bool valid)
+{
+    lastPage->setEnabled(valid);
+}
+

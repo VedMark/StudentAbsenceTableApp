@@ -1,11 +1,14 @@
 #include <QContextMenuEvent>
 #include <QFileDialog>
+#include <QGraphicsColorizeEffect>
 #include <QLayout>
 #include <QMessageBox>
 #include <QScrollBar>
 #include <QStatusBar>
 #include <QToolBar>
 #include <iterator>
+
+#include <QTime>
 
 #include "studentabsencedialogapp.h"
 #include "../controller/xmlparser.h"
@@ -18,14 +21,11 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
 
     view = new QTableView(this);
     controller = new ModelController(model);
-    proxyModel = new ProxyModel(model, this);
+    proxyModel = new ProxyModel(this);
     proxyModel->setSourceModel(model);
     view->setModel(proxyModel);
 
-    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     header = new HierarchicalHeaderView(Qt::Horizontal, this);
-    header->setHighlightSections(true);
     header->setSectionResizeMode(QHeaderView::Fixed);
     header->setStretchLastSection(true);
     header->setDefaultSectionSize(30);
@@ -49,9 +49,9 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     setConnections();
 
     setMinimumSize(800, 600);
-    resize(maximumSize());
+    showMaximized();
 
-    setWindowTitle("Таблица пропусков студентов");
+    setWindowTitle(QStringLiteral("Таблица пропусков студентов"));
 }
 
 StudentAbsenceTableApp::~StudentAbsenceTableApp()
@@ -80,9 +80,10 @@ void StudentAbsenceTableApp::resizeEvent(QResizeEvent *)
 
 bool StudentAbsenceTableApp::newFile()
 {
-    if(agreedToContinue()){
+    if(!documentModified || agreedToContinue()){
         controller->clearModel();
-        setCurrentFileName("");
+        setCurrentFileName(QStringLiteral(""));
+        documentModified = false;
         return true;
     }
     return false;
@@ -92,7 +93,8 @@ bool StudentAbsenceTableApp::open()
 {
     if(agreedToContinue()){
         QString openFileName = QFileDialog::getOpenFileName(this,
-                                                tr("Открыть файл"), "/home/vedmark",
+                                                tr("Открыть файл"),
+                                                QStringLiteral("/home/vedmark"),
                                                 tr("Файл данных (*.xml)"));
         if(!openFileName.isEmpty())
             return loadFile(openFileName);
@@ -112,7 +114,8 @@ bool StudentAbsenceTableApp::save()
 bool StudentAbsenceTableApp::saveAs()
 {
     QString fileName = QFileDialog::getSaveFileName(this,
-                                                tr("Сохранить файл"), "/home/vedmark",
+                                                tr("Сохранить файл"),
+                                                QStringLiteral("/home/vedmark"),
                                                 tr("Файл данных (*.xml)"));
     if(fileName.isEmpty())
         return false;
@@ -133,19 +136,24 @@ bool StudentAbsenceTableApp::loadFile(const QString &fileName)
     }
     catch(FileOpenException)
     {
-        QMessageBox::warning(this, "Ошибка!", "Ошибка чтения файла!", QMessageBox::Ok);
+        QMessageBox::warning(this, QStringLiteral("Ошибка!"),
+                             QStringLiteral("Ошибка чтения файла!"),
+                             QMessageBox::Ok);
         delete xmlParser;
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+        statusBar()->showMessage(QStringLiteral("Загрузка отменена"), 2000);
         return false;
     }
     catch(FileReadException)
     {
-        QMessageBox::warning(this, "Ошибка!", "Ошибка чтения файла!", QMessageBox::Ok);
+        QMessageBox::warning(this, QStringLiteral("Ошибка!"),
+                             QStringLiteral("Ошибка чтения файла!"),
+                             QMessageBox::Ok);
         delete xmlParser;
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+        statusBar()->showMessage(QStringLiteral("Загрузка отменена"), 2000);
         return false;
     }
 
+    proxyModel->showPage(1);
     return true;
 }
 
@@ -157,21 +165,25 @@ bool StudentAbsenceTableApp::saveFile(const QString &fileName)
         xmlParser->write(fileName);
 
         setCurrentFileName(fileName);
-        statusBar()->showMessage(tr("Файл сохранён"), 2000);
+        statusBar()->showMessage(QStringLiteral("Файл сохранён"), 2000);
         documentModified = false;
     }
     catch(FileOpenException)
     {
-        QMessageBox::warning(this, "Ошибка!", "Ошибка открытия файла!", QMessageBox::Ok);
+        QMessageBox::warning(this, QStringLiteral("Ошибка!"),
+                             QStringLiteral("Ошибка открытия файла!"),
+                             QMessageBox::Ok);
         delete xmlParser;
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+        statusBar()->showMessage(QStringLiteral("Загрузка отменена"), 2000);
         return false;
     }
     catch(FileReadException)
     {
-        QMessageBox::warning(this, "Ошибка!", "Ошибка открытия файла!", QMessageBox::Ok);
+        QMessageBox::warning(this, QStringLiteral("Ошибка!"),
+                             QStringLiteral("Ошибка открытия файла!"),
+                             QMessageBox::Ok);
         delete xmlParser;
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
+        statusBar()->showMessage(QStringLiteral("Загрузка отменена"), 2000);
         return false;
     }
 
@@ -239,38 +251,89 @@ void StudentAbsenceTableApp::createMainWidget()
     mainWidget = new QWidget(this);
     setCentralWidget(mainWidget);
 
-    QPushButton *pBtn1 = new QPushButton("1", this);
-    pBtn1->addAction(MenuComponents::instance().nextPage);
-    QPushButton *pBtn2 = new QPushButton("2", this);
+    prevPageBtn = new QPushButton(QIcon(":/images/prevPage.png"), "", this);
+    prevPageBtn->addAction(MenuComponents::instance().prevPage);
+    prevPageBtn->setToolTip(QStringLiteral("Перейти на предыдущую страницу"));
+    prevPageBtn->setEnabled(false);
 
-    QHBoxLayout *l1 = new QHBoxLayout;
+    nextPageBtn = new QPushButton(QIcon(":/images/nextPage.png"), "", this);
+    nextPageBtn->addAction(MenuComponents::instance().nextPage);
+    nextPageBtn->setToolTip(QStringLiteral("Перейти на следующую страницу"));
+    nextPageBtn->setEnabled(false);
 
-    l1->addWidget(pBtn1);
-    l1->addWidget(pBtn2);
-    l1->addStretch();
+    firstPageBtn = new QPushButton(QIcon(":/images/firstPage.png"), "", this);
+    firstPageBtn->addAction(MenuComponents::instance().firstPage);
+    firstPageBtn->setToolTip(QStringLiteral("Перейти на первую страницу"));
+    firstPageBtn->setEnabled(false);
 
-    QVBoxLayout* l2 = new QVBoxLayout;
+    lastPageBtn = new QPushButton(QIcon(":/images/lastPage.png"), "", this);
+    lastPageBtn->addAction(MenuComponents::instance().lastPage);
+    lastPageBtn->setToolTip(QStringLiteral("Перейти на последнюю страницу"));
+    lastPageBtn->setEnabled(false);
 
-    l2->addWidget(view);
-    l2->addLayout(l1);
+    goToPageBtn = new QPushButton(QIcon(":/images/goToPage.png"), "Перейти", this);
+    goToPageBtn->addAction(MenuComponents::instance().goToPage);
+    goToPageBtn->setToolTip(QStringLiteral("Перейти на страницу"));
+    goToPageBtn->setEnabled(true);
+    goToPageEdt = new QLineEdit(this);
+    goToPageEdt->setMaximumWidth(50);
 
-    centralWidget()->setLayout(l2);
+    pageLbl = new QLabel(QString::number(proxyModel->maxPage()), this);
+    currentPageLbl = new QLabel(QString::number(proxyModel->getPage()), this);
+
+    entriesPerPageBtn = new QPushButton(QIcon(":/images/entriesPerPage.png"), "Изменить", this);
+    entriesPerPageBtn->addAction(MenuComponents::instance().entriesPerPage);
+    entriesPerPageBtn->setToolTip(QStringLiteral("Изменить количество записей на странице"));
+    entriesPerPageBtn->setEnabled(true);
+    entriesPerPageEdt = new QLineEdit(this);
+    entriesPerPageEdt->setMaximumWidth(50);
+    entriesPerPageLbl = new QLabel(QString::number(proxyModel->getEntriesPerPage()), this);
+
+    entriesLbl = new QLabel(QString::number(model->entriesSize()), this);
+
+    QHBoxLayout *buttonsLayout = new QHBoxLayout;
+
+    buttonsLayout->addWidget(firstPageBtn);
+    buttonsLayout->addWidget(prevPageBtn);
+    buttonsLayout->addWidget(nextPageBtn);
+    buttonsLayout->addWidget(lastPageBtn);
+    buttonsLayout->addStretch(1);
+    buttonsLayout->addWidget(new QLabel("Страниц:", this));
+    buttonsLayout->addWidget(pageLbl);
+    buttonsLayout->addStretch(1);
+    buttonsLayout->addWidget(new QLabel("Текущая:", this));
+    buttonsLayout->addWidget(currentPageLbl);
+    buttonsLayout->addWidget(goToPageEdt);
+    buttonsLayout->addWidget(goToPageBtn);
+    buttonsLayout->addStretch(1);
+    buttonsLayout->addWidget(new QLabel("Записей:", this));
+    buttonsLayout->addWidget(entriesLbl);
+    buttonsLayout->addStretch(1);
+    buttonsLayout->addWidget(new QLabel("Записей на странице:", this));
+    buttonsLayout->addWidget(entriesPerPageLbl);
+    buttonsLayout->addWidget(entriesPerPageEdt);
+    buttonsLayout->addWidget(entriesPerPageBtn);
+    buttonsLayout->addStretch(20);
+
+    QVBoxLayout* mainLayout = new QVBoxLayout;
+
+    mainLayout->addWidget(view);
+    mainLayout->addLayout(buttonsLayout);
+
+    centralWidget()->setLayout(mainLayout);
 }
 
 void StudentAbsenceTableApp::createToolBar()
 {
     toolBar = new QToolBar(this);
 
+    toolBar->addAction(MenuComponents::instance().newTable);
+    toolBar->addAction(MenuComponents::instance().openTable);
+    toolBar->addAction(MenuComponents::instance().saveTable);
+    toolBar->addSeparator();
     toolBar->addAction(MenuComponents::instance().addEntries);
     toolBar->addAction(MenuComponents::instance().findEntries);
     toolBar->addAction(MenuComponents::instance().removeEntries);
-
-    toolBar->addSeparator();
-
-    toolBar->addAction(MenuComponents::instance().prevPage);
-    toolBar->addAction(MenuComponents::instance().nextPage);
-    MenuComponents::instance().prevPage->setDisabled(true);
-    MenuComponents::instance().nextPage->setDisabled(true);
 
     addToolBar(toolBar);
 }
@@ -292,11 +355,14 @@ void StudentAbsenceTableApp::createMenu()
     editMenu->addAction(MenuComponents::instance().addEntries);
     editMenu->addAction(MenuComponents::instance().findEntries);
     editMenu->addAction(MenuComponents::instance().removeEntries);
-    editMenu->addSeparator();
-    editMenu->addAction(MenuComponents::instance().prevPage);
-    editMenu->addAction(MenuComponents::instance().nextPage);
-
     menuBar->addMenu(editMenu);
+
+    QMenu *watchMenu = new QMenu(tr("&Просмотр"), menuBar);
+    watchMenu->addAction(MenuComponents::instance().firstPage);
+    watchMenu->addAction(MenuComponents::instance().prevPage);
+    watchMenu->addAction(MenuComponents::instance().nextPage);
+    watchMenu->addAction(MenuComponents::instance().lastPage);
+    menuBar->addMenu(watchMenu);
 
     setMenuBar(menuBar);
 }
@@ -311,8 +377,10 @@ void StudentAbsenceTableApp::createContextMenu()
 
     contextMenu->addSeparator();
 
+    contextMenu->addAction(MenuComponents::instance().firstPage);
     contextMenu->addAction(MenuComponents::instance().prevPage);
     contextMenu->addAction(MenuComponents::instance().nextPage);
+    contextMenu->addAction(MenuComponents::instance().lastPage);
 }
 
 void StudentAbsenceTableApp::setConnections()
@@ -327,17 +395,137 @@ void StudentAbsenceTableApp::setConnections()
     connect(MenuComponents::instance().findEntries, SIGNAL( triggered(bool) ), SLOT( findEntry() ) );
     connect(MenuComponents::instance().removeEntries, SIGNAL( triggered(bool) ), SLOT( removeEntry() ) );
 
-    connect(MenuComponents::instance().prevPage, SIGNAL( triggered(bool) ), proxyModel, SLOT( showPrevPage() ) );
-    connect(MenuComponents::instance().nextPage, SIGNAL( triggered(bool) ), proxyModel, SLOT( showNextPage() ) );
-    connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex, QVector<int>) ), proxyModel, SLOT( enableNextPage() ) );
+    connect(MenuComponents::instance().prevPage, &QAction::triggered, [this] () {
+        proxyModel->showPage(proxyModel->getPage() - 1);
+        MenuComponents::instance().enableFirstPage(proxyModel->getPage() - 1 != 1);
+        MenuComponents::instance().enablePrevPage(proxyModel->getPage() - 1 != 1);
+        view->setFocus();
+    });
+    connect(MenuComponents::instance().nextPage, &QAction::triggered, [this] () {
+        proxyModel->showPage(proxyModel->getPage() + 1);
+        MenuComponents::instance().enableNextPage(proxyModel->getPage() + 1 < proxyModel->maxPage());
+        MenuComponents::instance().enableLastPage(proxyModel->getPage() + 1 < proxyModel->maxPage());
+        view->setFocus();
+    });
+    connect(MenuComponents::instance().firstPage, &QAction::triggered, [this] () {
+        proxyModel->showPage(1);
+        MenuComponents::instance().enableFirstPage(false);
+        MenuComponents::instance().enablePrevPage(false);
+        view->setFocus();
+    });
+    connect(MenuComponents::instance().lastPage, &QAction::triggered, [this] () {
+        proxyModel->showPage(proxyModel->maxPage());
+        MenuComponents::instance().enableNextPage(false);
+        MenuComponents::instance().enableLastPage(false);
+        view->setFocus();
+    });
+    connect(prevPageBtn, &QPushButton::clicked, [this] () {
+        proxyModel->showPage(proxyModel->getPage() - 1);
+        MenuComponents::instance().enableFirstPage(proxyModel->getPage() - 1 != 1);
+        MenuComponents::instance().enablePrevPage(proxyModel->getPage() - 1 != 1);
+        view->setFocus();
+    });
+    connect(nextPageBtn, &QPushButton::clicked, [this] () {
+        proxyModel->showPage(proxyModel->getPage() + 1);
+        MenuComponents::instance().enableNextPage(proxyModel->getPage() < proxyModel->maxPage());
+        MenuComponents::instance().enableLastPage(proxyModel->getPage() < proxyModel->maxPage());
+        view->setFocus();
+    });
+    connect(firstPageBtn, &QPushButton::clicked, [this] () {
+        proxyModel->showPage(1);
+        MenuComponents::instance().enableFirstPage(false);
+        MenuComponents::instance().enablePrevPage(false);
+        view->setFocus();
+    });
+    connect(lastPageBtn, &QPushButton::clicked, [this] () {
+        proxyModel->showPage(proxyModel->maxPage());
+        MenuComponents::instance().enableNextPage(false);
+        MenuComponents::instance().enableLastPage(false);
+        view->setFocus();
+    });
+
+    std::function<void ()> enableButtons = [&] {
+        if(proxyModel->getPage() >= proxyModel->maxPage()){
+            proxyModel->showPage(proxyModel->maxPage());
+            firstPageBtn->setEnabled(proxyModel->getPage() != 1);
+            prevPageBtn->setEnabled(proxyModel->getPage() != 1);
+            nextPageBtn->setEnabled(false);
+            lastPageBtn->setEnabled(false);
+        }
+        else{
+            firstPageBtn->setEnabled(proxyModel->getPage() != 1);
+            prevPageBtn->setEnabled(proxyModel->getPage() != 1);
+            nextPageBtn->setEnabled(true);
+            lastPageBtn->setEnabled(true);
+        }
+        view->setFocus();
+    };
+    connect(model, &StudentAbsenceModel::rowsInserted, enableButtons);
+    connect(model, &StudentAbsenceModel::rowsRemoved, enableButtons);
+
+    connect(model, &StudentAbsenceModel::rowsInserted, [&] {
+        entriesLbl->setText(QString::number(model->entriesSize()));
+        pageLbl->setText(QString::number(proxyModel->maxPage()));
+        currentPageLbl->setText(QString::number(proxyModel->getPage()));
+    });
+    connect(model, &StudentAbsenceModel::rowsRemoved, [&] {
+        entriesLbl->setText(QString::number(model->entriesSize()));
+        pageLbl->setText(QString::number(proxyModel->maxPage()));
+        currentPageLbl->setText(QString::number(proxyModel->getPage()));
+    });
+
+    connect(proxyModel, &ProxyModel::entriesPerPageChanged, [&] (qint64 value) {
+        entriesPerPageLbl->setText(QString::number(value));
+        pageLbl->setText(QString::number(proxyModel->maxPage()));
+    });
+
+    connect(proxyModel, &ProxyModel::pageChanged, [&] (qint64 page) {
+        firstPageBtn->setEnabled(page != 1);
+        prevPageBtn->setEnabled(page != 1);
+        nextPageBtn->setEnabled(page < proxyModel->maxPage());
+        lastPageBtn->setEnabled(page < proxyModel->maxPage());
+        currentPageLbl->setText(QString::number(page));
+    });
+
+    connect(goToPageBtn, &QPushButton::clicked, [&] {
+        auto ok = true;
+        qint64 num = goToPageEdt->text().toLongLong(&ok);
+        if(!(ok) || num < 1 || num > proxyModel->maxPage()){
+            QGraphicsColorizeEffect *effect = new QGraphicsColorizeEffect(goToPageBtn);
+            effect->setColor(QColor(250, 0, 0));
+            goToPageEdt->setGraphicsEffect(effect);
+            return;
+        }
+        proxyModel->showPage(goToPageEdt->text().toLongLong());
+        view->update(proxyModel->index(proxyModel->getEntriesPerPage(), model->LAST));
+        view->setFocus();
+    });
+    connect(goToPageEdt, &QLineEdit::textChanged, [&] () {
+        goToPageEdt->setGraphicsEffect(Q_NULLPTR);
+    });
+
+    connect(entriesPerPageBtn, &QPushButton::clicked, [&] {
+        auto ok = true;
+        qint64 num = entriesPerPageEdt->text().toLongLong(&ok);
+        if(!(ok) || num < 1){
+            QGraphicsColorizeEffect *effect = new QGraphicsColorizeEffect(goToPageBtn);
+            effect->setColor(QColor(250, 0, 0));
+            entriesPerPageEdt->setGraphicsEffect(effect);
+            return;
+        }
+        auto clueEntryInd = proxyModel->getEntriesPerPage() * (proxyModel->getPage() - 1) + 1;
+        proxyModel->setEntriesPerPage(entriesPerPageEdt->text().toLongLong());
+        auto newPage = clueEntryInd / proxyModel->getEntriesPerPage() + 1;
+        proxyModel->showPage(newPage);
+        view->update(proxyModel->index(proxyModel->getEntriesPerPage(), model->LAST));
+        view->setFocus();
+    });
+    connect(entriesPerPageEdt, &QLineEdit::textChanged, [&] () {
+        entriesPerPageEdt->setGraphicsEffect(Q_NULLPTR);
+    });
 
     connect(
         model, &StudentAbsenceModel::dataChanged,
         [this] () { documentModified = true; }
-    );
-
-    connect(
-        model, &StudentAbsenceModel::dataChanged,
-        [this] () { proxyModel->refreshPageEntries(); }
     );
 }

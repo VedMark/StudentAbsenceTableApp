@@ -16,10 +16,20 @@ public:
 
     QAction *prevPage;
     QAction *nextPage;
+    QAction *firstPage;
+    QAction *lastPage;
+    QAction *goToPage;
+    QAction *entriesPerPage;
 
     QAction *addEntries;
     QAction *findEntries;
     QAction *removeEntries;
+
+public slots:
+    void enablePrevPage(bool valid);
+    void enableNextPage(bool valid);
+    void enableFirstPage(bool valid);
+    void enableLastPage(bool valid);
 
 private:
     static MenuComponents *p_instance;

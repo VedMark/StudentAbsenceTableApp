@@ -77,6 +77,19 @@ private:
     RemoveDialog *removeDialog;
 
     bool documentModified;
+
+    QPushButton *prevPageBtn;
+    QPushButton *nextPageBtn;
+    QPushButton *firstPageBtn;
+    QPushButton *lastPageBtn;
+    QPushButton *goToPageBtn;
+    QLineEdit *goToPageEdt;
+    QLabel *pageLbl;
+    QLabel *currentPageLbl;
+    QPushButton *entriesPerPageBtn;
+    QLineEdit *entriesPerPageEdt;
+    QLabel *entriesPerPageLbl;
+    QLabel *entriesLbl;
 };
 
 #endif // QTABLE_H
