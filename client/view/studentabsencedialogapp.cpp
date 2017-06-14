@@ -247,9 +247,9 @@ void StudentAbsenceTableApp::removeEntry()
     removeDialog->activateWindow();
 }
 
-void StudentAbsenceTableApp::connectToServer()
+void StudentAbsenceTableApp::showConnectWindow()
 {
-    auto client = new StudentAbsenceClient("Hello", 2323);
+    auto client = new StudentAbsenceClient();
     client->show();
 }
 
@@ -459,7 +459,7 @@ void StudentAbsenceTableApp::setConnections()
         view->setFocus();
     });
 
-    connect(MenuComponents::instance().connectToServer, SIGNAL( triggered(bool) ), SLOT( connectToServer() ) );
+    connect(MenuComponents::instance().connectToServer, SIGNAL( triggered(bool) ), SLOT( showConnectWindow() ) );
 
     std::function<void ()> enableButtons = [&] {
         if(proxyModel->getPage() >= proxyModel->maxPage()){
@@ -513,6 +513,7 @@ void StudentAbsenceTableApp::setConnections()
             goToPageEdt->setGraphicsEffect(effect);
             return;
         }
+        goToPageEdt->setText("");
         proxyModel->showPage(goToPageEdt->text().toLongLong());
         view->update(proxyModel->index(proxyModel->getEntriesPerPage(), model->LAST));
         view->setFocus();
@@ -525,11 +526,12 @@ void StudentAbsenceTableApp::setConnections()
         auto ok = true;
         qint64 num = entriesPerPageEdt->text().toLongLong(&ok);
         if(!(ok) || num < 1){
-            auto effect = new QGraphicsColorizeEffect(goToPageBtn);
+            auto effect = new QGraphicsColorizeEffect(entriesPerPageBtn);
             effect->setColor(QColor(250, 0, 0));
             entriesPerPageEdt->setGraphicsEffect(effect);
             return;
         }
+        entriesPerPageEdt->setText("");
         auto clueEntryInd = proxyModel->getEntriesPerPage() * (proxyModel->getPage() - 1) + 1;
         proxyModel->setEntriesPerPage(entriesPerPageEdt->text().toLongLong());
         auto newPage = clueEntryInd / proxyModel->getEntriesPerPage() + 1;

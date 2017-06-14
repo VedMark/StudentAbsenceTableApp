@@ -2,10 +2,21 @@
 
 #include <QWidget>
 
+#include "model/studentabsencemodel.h"
+
 class QTcpServer;
 class QTcpSocket;
 class QTextEdit;
 
+enum request{
+    READ,
+    ADD,
+    SEARCH,
+    REMOVE,
+    NEW,
+    SAVE,
+    OPEN
+};
 
 class StudentAbsenceServer : public QWidget
 {
@@ -22,8 +33,14 @@ public slots:
 private:
     void sendToClient(QTcpSocket *socket, const QString &text);
 
+private slots:
+    void startServer();
+    void stopServer();
+
 private:
     QTcpServer *tcpServer;
+    StudentAbsenceModel *model;
     QTextEdit *logEdt;
-    qint64 nextBlockSize;
+    qint64 port;
+    qint16 nextBlockSize;
 };

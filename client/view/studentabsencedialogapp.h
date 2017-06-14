@@ -52,7 +52,7 @@ protected slots:
     void findEntry();
     void removeEntry();
 
-    void connectToServer();
+    void showConnectWindow();
 
 private:
     void createMainWidget();

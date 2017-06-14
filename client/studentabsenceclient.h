@@ -6,26 +6,41 @@
 class QLineEdit;
 class QTextEdit;
 
+enum request{
+    READ,
+    ADD,
+    SEARCH,
+    REMOVE,
+    NEW,
+    SAVE,
+    OPEN
+};
+
 class StudentAbsenceClient : public QWidget
 {
     Q_OBJECT
 
 public:
-    StudentAbsenceClient(const QString &strHost, int nPort, QWidget *parent = Q_NULLPTR);
+    StudentAbsenceClient(QWidget *parent = Q_NULLPTR);
     ~StudentAbsenceClient();
 
 protected:
     virtual void closeEvent(QCloseEvent *);
 
 private slots:
-    void readyRead();
+    void connectToServer();
+    void disconnectFromServer();
+    void slotReadyRead();
     void handleError(QAbstractSocket::SocketError);
     void sendToServer();
-    void handleConnected();
+
+private:
+    void locateWidgets();
 
 private:
     QTcpSocket *tcpSocket;
+    QLineEdit *hostNameEdt;
+    QLineEdit *portEdt;
     QTextEdit *logEdt;
-    QLineEdit *inputEdt;
-    qint64 nextBlockSize;
+    qint16 nextBlockSize;
 };
