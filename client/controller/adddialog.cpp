@@ -6,8 +6,8 @@
 #include "../controller/modelcontroller.h"
 
 
-AddDialog::AddDialog(StudentAbsenceModel *model_, QWidget *parent)
-    :QDialog(parent)
+AddDialog::AddDialog(StudentAbsenceModel *model_, StudentAbsenceClient *client_, QWidget *parent)
+    :QDialog(parent), client(client_)
 {
     model = model_;
 
@@ -76,6 +76,11 @@ void AddDialog::createEntry()
         QMessageBox::information(this, tr("Внимание!"),
                                  tr("Введены некорректные данные!"),
                                  QMessageBox::Ok);
+    if(client){
+        client->sendAddRequest(StudentEntry(RussianFullName(surnameEdt->text(), nameEdt->text(), patronymicEdt->text()),
+                                            Group(groupEdt->text()),
+                                            Absence(illnessEdt->text().toInt(), anotherEdt->text().toInt(), hookyEdt->text().toInt())));
+    }
 }
 
 void AddDialog::changeNumFilledEdits()

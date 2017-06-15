@@ -17,6 +17,8 @@
 #include <QTableView>
 #include <QWidget>
 
+class StudentAbsenceClient;
+
 
 class StudentAbsenceTableApp : public QMainWindow
 {
@@ -55,6 +57,11 @@ protected slots:
     void showConnectWindow();
 
 private:
+    enum mode{
+        LOCAL,
+        NETWORK
+    };
+
     void createMainWidget();
     void createToolBar();
     void createMenu();
@@ -66,6 +73,7 @@ private:
     QTableView *view;
     HierarchicalHeaderView *header;
     ModelController *controller;
+    StudentAbsenceClient *client;
 
     QWidget *mainWidget;
     QMenuBar *menuBar;
@@ -78,8 +86,11 @@ private:
     FindDialog *findDialog;
     RemoveDialog *removeDialog;
 
+    mode workMode;
+
     bool documentModified;
 
+    QLabel *modeLbl;
     QPushButton *prevPageBtn;
     QPushButton *nextPageBtn;
     QPushButton *firstPageBtn;

@@ -10,6 +10,12 @@ class Group;
 class Absence;
 struct StudentEntry;
 
+enum SearchPattern{
+    FIRST,
+    SECOND,
+    THIRD
+};
+
 class StudentAbsenceModel : public QAbstractTableModel
 {
     Q_OBJECT

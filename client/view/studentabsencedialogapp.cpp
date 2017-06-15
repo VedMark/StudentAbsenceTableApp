@@ -14,7 +14,8 @@
 
 
 StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent), addDialog(Q_NULLPTR), findDialog(Q_NULLPTR), removeDialog(Q_NULLPTR),
+      client(Q_NULLPTR), workMode(LOCAL), documentModified(false)
 {
     model = new StudentAbsenceModel(this);
 
@@ -28,30 +29,24 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     header->setSectionResizeMode(QHeaderView::Fixed);
     header->setStretchLastSection(true);
     header->setDefaultSectionSize(30);
-
     view->setHorizontalHeader(header);
 
     createMainWidget();
+    setStatusBar(new QStatusBar(this));
 
-    addDialog = Q_NULLPTR;
-    findDialog = Q_NULLPTR;
-    removeDialog = Q_NULLPTR;
-
-    documentModified = false;
+    modeLbl = new QLabel("локальный режим", this);
+    statusBar()->addPermanentWidget(modeLbl);
 
     createToolBar();
     createMenu();
     createContextMenu();
 
-    setStatusBar(new QStatusBar(this));
-
     setConnections();
 
     setMinimumSize(800, 600);
-    showMaximized();
-
     setWindowIcon(QIcon(":images/spreadsheet.png"));
     setWindowTitle(tr("Таблица пропусков студентов"));
+    showMaximized();
 }
 
 StudentAbsenceTableApp::~StudentAbsenceTableApp()
@@ -92,42 +87,62 @@ bool StudentAbsenceTableApp::newFile()
         documentModified = false;
         return true;
     }
+    if(workMode == NETWORK)
+        client->sendNewRequest();
     return false;
 }
 
 bool StudentAbsenceTableApp::open()
 {
-    if(agreedToContinue()){
-        auto openFileName = QFileDialog::getOpenFileName(this,
-                                                tr("Открыть файл"),
-                                                tr("/home/vedmark"),
-                                                tr("Файл данных (*.xml)"));
-        if(!openFileName.isEmpty())
-            return loadFile(openFileName);
+    if(workMode == LOCAL){
+        if(agreedToContinue()){
+            auto openFileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Открыть файл"),
+                                                    tr("/home/vedmark"),
+                                                    tr("Файл данных (*.xml)"));
+            if(!openFileName.isEmpty())
+                return loadFile(openFileName);
 
+        }
+    }
+    if(workMode == NETWORK){
+        client->sendOpenRequest();
+        return true;
     }
     return false;
 }
 
 bool StudentAbsenceTableApp::save()
 {
-    if(currentFileName.isEmpty())
-        return saveAs();
-    else
-        return saveFile(currentFileName);
+    if(workMode == LOCAL){
+        if(currentFileName.isEmpty())
+            return saveAs();
+        else
+            return saveFile(currentFileName);
+    }
+    else{
+        client->sendSaveRequest();
+        return true;
+    }
 }
 
 bool StudentAbsenceTableApp::saveAs()
 {
-    auto fileName = QFileDialog::getSaveFileName(this,
-                                                tr("Сохранить файл"),
-                                                tr("/home/vedmark"),
-                                                tr("Файл данных (*.xml)"));
-    if(fileName.isEmpty())
-        return false;
-    if(!fileName.endsWith(".xml"))
-        fileName += ".xml";
-    return saveFile(fileName);
+    if(workMode == LOCAL){
+        auto fileName = QFileDialog::getSaveFileName(this,
+                                                    tr("Сохранить файл"),
+                                                    tr("/home/vedmark"),
+                                                    tr("Файл данных (*.xml)"));
+        if(fileName.isEmpty())
+            return false;
+        if(!fileName.endsWith(".xml"))
+            fileName += ".xml";
+        return saveFile(fileName);
+    }
+    else{
+        client->sendSaveRequest();
+        return true;
+    }
 }
 
 bool StudentAbsenceTableApp::loadFile(const QString &fileName)
@@ -218,8 +233,10 @@ void StudentAbsenceTableApp::addEntry()
 {
     if(addDialog != Q_NULLPTR)
         delete addDialog;
-    addDialog = new AddDialog(model, this);
-
+    if(workMode == LOCAL)
+        addDialog = new AddDialog(model, Q_NULLPTR, this);
+    else
+        addDialog = new AddDialog(model, client, this);
     addDialog->show();
     addDialog->raise();
     addDialog->activateWindow();
@@ -229,7 +246,10 @@ void StudentAbsenceTableApp::findEntry()
 {
     if(findDialog != Q_NULLPTR)
         delete findDialog;
-    findDialog = new FindDialog(model, this);
+    if(workMode == LOCAL)
+        findDialog = new FindDialog(model, Q_NULLPTR, this);
+    else
+        findDialog = new FindDialog(model, client, this);
 
     findDialog->show();
     findDialog->raise();
@@ -240,7 +260,10 @@ void StudentAbsenceTableApp::removeEntry()
 {
     if(removeDialog != Q_NULLPTR)
         delete removeDialog;
-    removeDialog = new RemoveDialog(model, this);
+    if(workMode == LOCAL)
+        removeDialog = new RemoveDialog(model, Q_NULLPTR, this);
+    else
+        removeDialog = new RemoveDialog(model, client, this);
 
     removeDialog->show();
     removeDialog->raise();
@@ -249,8 +272,18 @@ void StudentAbsenceTableApp::removeEntry()
 
 void StudentAbsenceTableApp::showConnectWindow()
 {
-    auto client = new StudentAbsenceClient();
+    if(client == Q_NULLPTR)
+        client = new StudentAbsenceClient(model);
     client->show();
+
+    connect(client, &StudentAbsenceClient::connectedToServer, [this] {
+        workMode = NETWORK;
+        modeLbl->setText("подключено к серверу");
+    });
+    connect(client, &StudentAbsenceClient::disconnectedFromServer, [this] {
+        workMode = LOCAL;
+        modeLbl->setText("локальный режим");
+    });
 }
 
 void StudentAbsenceTableApp::createMainWidget()

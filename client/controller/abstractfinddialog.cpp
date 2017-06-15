@@ -13,8 +13,8 @@
 #include <limits>
 
 
-AbstractFindDialog::AbstractFindDialog(StudentAbsenceModel *model_, QWidget *parent)
-    : QDialog(parent)
+AbstractFindDialog::AbstractFindDialog(StudentAbsenceModel *model_, StudentAbsenceClient *client_, QWidget *parent)
+    : QDialog(parent), client(client_)
 {
     model = model_;
 

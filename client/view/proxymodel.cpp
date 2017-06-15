@@ -12,7 +12,8 @@ ProxyModel::ProxyModel(QObject *parent)
 ProxyModel::~ProxyModel()
 {}
 
-int ProxyModel::rowCount(const QModelIndex &parent) const{
+int ProxyModel::rowCount(const QModelIndex &parent) const
+{
     Q_UNUSED(parent)
     if(!sourceModel())
         return 0;
@@ -22,7 +23,8 @@ int ProxyModel::rowCount(const QModelIndex &parent) const{
             : sourceModel()->rowCount() - entriesPerPage * (page - 1);
 }
 
-int ProxyModel::columnCount(const QModelIndex &parent) const{
+int ProxyModel::columnCount(const QModelIndex &parent) const
+{
     Q_UNUSED(parent);
     return StudentAbsenceModel::LAST;
 }

@@ -39,7 +39,8 @@ SOURCES += main.cpp \
     controller/menucomponents.cpp \
     controller/modelcontroller.cpp \
     controller/removedialog.cpp \
-    controller/xmlparser.cpp
+    controller/xmlparser.cpp \
+    controller/networkdialog.cpp
 
 HEADERS += \
     studentabsenceclient.h \
@@ -53,6 +54,7 @@ HEADERS += \
     controller/menucomponents.h \
     controller/modelcontroller.h \
     controller/removedialog.h \
-    controller/xmlparser.h
+    controller/xmlparser.h \
+    controller/networkdialog.h
 
 RESOURCES += icons.qrc

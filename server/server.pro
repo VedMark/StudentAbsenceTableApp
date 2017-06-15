@@ -28,8 +28,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp \
     studentabsenceserver.cpp \
-    model/studentabsencemodel.cpp
+    model/studentabsencemodel.cpp \
+    controller/modelcontroller.cpp \
+    controller/xmlparser.cpp \
 
 HEADERS += \
     studentabsenceserver.h \
-    model/studentabsencemodel.h
+    model/studentabsencemodel.h \
+    controller/modelcontroller.h \
+    controller/xmlparser.h \

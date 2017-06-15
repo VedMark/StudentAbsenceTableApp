@@ -6,7 +6,7 @@
 class FindDialog: public AbstractFindDialog
 {
 public:
-    FindDialog(StudentAbsenceModel *model, QWidget *parent = Q_NULLPTR);
+    FindDialog(StudentAbsenceModel *model, StudentAbsenceClient *client_, QWidget *parent = Q_NULLPTR);
     ~FindDialog();
 
 protected slots:

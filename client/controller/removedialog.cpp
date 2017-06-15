@@ -6,8 +6,8 @@
 
 #include <algorithm>
 
-RemoveDialog::RemoveDialog(StudentAbsenceModel *model, QWidget *parent)
-    : AbstractFindDialog(model, parent)
+RemoveDialog::RemoveDialog(StudentAbsenceModel *model, StudentAbsenceClient *client_, QWidget *parent)
+    : AbstractFindDialog(model, client_, parent)
 {
     setWindowTitle("Удалить записи");
     setWindowIcon(QIcon(":/images/removeEntries.png"));
@@ -38,6 +38,27 @@ void RemoveDialog::handleOkBtn()
             QMessageBox::information(this, tr("Внимание!"),
                                      tr("Данных по запросу не найдено"),
                                      QMessageBox::Ok);
+            if(client){
+                QStringList list;
+                switch ((SearchPattern)stackedWidget->currentIndex()) {
+                case FIRST:
+                    list.append(surnameEdt1->text());
+                    list.append(groupEdt->text());
+                    break;
+                case SECOND:
+                    list.append(surnameEdt2->text());
+                    list.append(QString::number(absKindCmb->currentIndex()));
+                    list.append(numAbsEdt->text());
+                    break;
+                case THIRD:
+                    list.append(surnameEdt3->text());
+                    list.append(lowBoundEdt->text());
+                    list.append(topBoundEdt->text());
+                    break;
+                }
+                client->sendRemoveRequest((SearchPattern)stackedWidget->currentIndex(),
+                                        list);
+            }
         }
         else
             QMessageBox::information(

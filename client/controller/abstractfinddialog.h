@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../model/studentabsencemodel.h"
+#include "../studentabsenceclient.h"
 
 #include <QComboBox>
 #include <QDialog>
@@ -20,7 +21,7 @@ class AbstractFindDialog : public QDialog
     Q_OBJECT
 
 public:
-    AbstractFindDialog(StudentAbsenceModel *model, QWidget *parent = Q_NULLPTR);
+    AbstractFindDialog(StudentAbsenceModel *model, StudentAbsenceClient *, QWidget *parent = Q_NULLPTR);
     ~AbstractFindDialog();
 
 
@@ -28,11 +29,6 @@ signals:
     void numFilledEditsChanged(int);
 
 protected:
-    enum SearchPattern{
-        FIRST,
-        SECOND,
-        THIRD
-    };
 
     virtual void displayStudentEntryList(const StudentAbsenceModel::students&);
 
@@ -48,6 +44,7 @@ protected:
 
 
     StudentAbsenceModel *model;
+    StudentAbsenceClient *client;
 
     QPushButton *okBtn;
     QPushButton *closeBtn;

@@ -5,8 +5,8 @@
 #include <QMessageBox>
 
 
-FindDialog::FindDialog(StudentAbsenceModel *model, QWidget *parent)
-    :AbstractFindDialog(model, parent)
+FindDialog::FindDialog(StudentAbsenceModel *model, StudentAbsenceClient *client_, QWidget *parent)
+    :AbstractFindDialog(model, client_, parent)
 {
     okBtn->setText(tr("Найти"));
     setWindowIcon(QIcon(":/images/findEntries.png"));
@@ -40,6 +40,28 @@ void FindDialog::handleOkBtn()
         else{
             displayStudentEntryList(searchResult);
         }
+        if(client){
+            QStringList list;
+            switch ((SearchPattern)stackedWidget->currentIndex()) {
+            case FIRST:
+                list.append(surnameEdt1->text());
+                list.append(groupEdt->text());
+                break;
+            case SECOND:
+                list.append(surnameEdt2->text());
+                list.append(QString::number(absKindCmb->currentIndex()));
+                list.append(numAbsEdt->text());
+                break;
+            case THIRD:
+                list.append(surnameEdt3->text());
+                list.append(lowBoundEdt->text());
+                list.append(topBoundEdt->text());
+                break;
+            }
+            client->sendFindRequest((SearchPattern)stackedWidget->currentIndex(),
+                                    list);
+        }
+
     }
     else
         QMessageBox::information(this, tr("Внимание!"),

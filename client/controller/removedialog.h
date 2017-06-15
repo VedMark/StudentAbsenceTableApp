@@ -7,7 +7,7 @@ class RemoveDialog : public AbstractFindDialog
     Q_OBJECT
 
 public:
-    RemoveDialog(StudentAbsenceModel *model, QWidget *parent = Q_NULLPTR);
+    RemoveDialog(StudentAbsenceModel *model, StudentAbsenceClient *client_, QWidget *parent = Q_NULLPTR);
     ~RemoveDialog();
 
 protected:

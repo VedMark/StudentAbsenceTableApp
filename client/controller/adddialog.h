@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../model/studentabsencemodel.h"
+#include "../studentabsenceclient.h"
 
 #include <QDialog>
 #include <QLabel>
@@ -13,7 +14,7 @@ class AddDialog : public QDialog
     Q_OBJECT
 
 public:
-    AddDialog(StudentAbsenceModel *model, QWidget *parent = Q_NULLPTR);
+    AddDialog(StudentAbsenceModel *model, StudentAbsenceClient * client, QWidget *parent = Q_NULLPTR);
     ~AddDialog();
 
 signals:
@@ -37,6 +38,7 @@ private:
     const qint8 MAX_NUM_FILLED_EDITS = 7;
 
     StudentAbsenceModel *model;
+    StudentAbsenceClient *client;
 
     QPushButton *addBtn;
     QPushButton *closeBtn;

@@ -1,21 +1,28 @@
 #pragma once
 
 #include <QWidget>
+#include <QDir>
 
-#include "model/studentabsencemodel.h"
+class StudentAbsenceModel;
+class ModelController;
 
 class QTcpServer;
 class QTcpSocket;
 class QTextEdit;
 
-enum request{
-    READ,
+enum Request{
     ADD,
     SEARCH,
     REMOVE,
     NEW,
+    CHOOSE_FILE,
     SAVE,
     OPEN
+};
+enum Answer{
+    RESPONSE,
+    MODEL,
+    FILES,
 };
 
 class StudentAbsenceServer : public QWidget
@@ -31,7 +38,9 @@ public slots:
     void readClient();
 
 private:
-    void sendToClient(QTcpSocket *socket, const QString &text);
+    void sendModel(QTcpSocket *socket);
+    void sendResponce(QTcpSocket *socket, const QString &text);
+    void sendStringList(QTcpSocket *socket, const QStringList &text);
 
 private slots:
     void startServer();
@@ -40,6 +49,8 @@ private slots:
 private:
     QTcpServer *tcpServer;
     StudentAbsenceModel *model;
+    ModelController *controller;
+    QDir dataDir;
     QTextEdit *logEdt;
     qint64 port;
     qint16 nextBlockSize;
