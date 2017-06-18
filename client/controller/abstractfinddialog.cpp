@@ -13,7 +13,7 @@
 #include <limits>
 
 
-AbstractFindDialog::AbstractFindDialog(StudentAbsenceModel *model_, StudentAbsenceClient *client_, QWidget *parent)
+AbstractFindDialog::AbstractFindDialog(ProxyModel *model_, StudentAbsenceClient *client_, QWidget *parent)
     : QDialog(parent), client(client_)
 {
     model = model_;
@@ -82,20 +82,6 @@ AbstractFindDialog::AbstractFindDialog(StudentAbsenceModel *model_, StudentAbsen
 AbstractFindDialog::~AbstractFindDialog()
 {}
 
-void AbstractFindDialog::displayStudentEntryList(const StudentAbsenceModel::students &list)
-{
-    StudentAbsenceModel *mod = new StudentAbsenceModel(this);
-    mod->setStudentEntryList(list);
-
-    resultTable->setModel(mod);
-    resultTable->setVisible(true);
-
-    resize(sizeHint());
-
-    move((QApplication::desktop()->width() - width()) / 2,
-         (QApplication::desktop()->height() - height()) / 2);
-}
-
 std::function<bool (const StudentEntry &)> AbstractFindDialog::condition()
 {
         std::function<bool (const StudentEntry &)> condition;
@@ -112,11 +98,11 @@ std::function<bool (const StudentEntry &)> AbstractFindDialog::condition()
             std::function<bool (const StudentEntry&)> equalAbsence =
                     [&] (const StudentEntry& entry) -> bool {
                         switch (absKindCmb->currentIndex() + 2) {
-                        case StudentAbsenceModel::ILLNESS:
+                        case ProxyModel::ILLNESS:
                             return entry.absence.getIllness() == numAbsEdt->text().toInt();
-                        case StudentAbsenceModel::ANOTHER:
+                        case ProxyModel::ANOTHER:
                             return entry.absence.getAnother() == numAbsEdt->text().toInt();
-                        case StudentAbsenceModel::HOOKY:
+                        case ProxyModel::HOOKY:
                             return entry.absence.getHooky() == numAbsEdt->text().toInt();
                         }
                         return false;
@@ -248,8 +234,6 @@ void AbstractFindDialog::connectLineEdits()
     connect(this, SIGNAL( numFilledEditsChanged(int) ), SLOT( enableOkButton(int) ) );
 
     connect(okBtn,  SIGNAL( clicked(bool) ), SLOT( handleOkBtn() ) );
-
-    connect(closeBtn, SIGNAL( clicked(bool) ), SLOT( close() ) );
 }
 
 void AbstractFindDialog::addLayouts()

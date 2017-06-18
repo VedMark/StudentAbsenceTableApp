@@ -29,32 +29,28 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp \
     studentabsenceclient.cpp \
-    model/studentabsencemodel.cpp \
-    view/HierarchicalHeaderView.cpp \
     view/proxymodel.cpp \
+    view/HierarchicalHeaderView.cpp \
     view/studentabsencedialogapp.cpp \
     controller/abstractfinddialog.cpp \
     controller/adddialog.cpp \
     controller/finddialog.cpp \
     controller/menucomponents.cpp \
-    controller/modelcontroller.cpp \
     controller/removedialog.cpp \
     controller/xmlparser.cpp \
-    controller/networkdialog.cpp
+    controller/networkdialog.cpp \
 
 HEADERS += \
     studentabsenceclient.h \
-    model/studentabsencemodel.h \
-    view/HierarchicalHeaderView.h \
     view/proxymodel.h \
+    view/HierarchicalHeaderView.h \
     view/studentabsencedialogapp.h \
     controller/abstractfinddialog.h \
     controller/adddialog.h \
     controller/finddialog.h \
     controller/menucomponents.h \
-    controller/modelcontroller.h \
     controller/removedialog.h \
     controller/xmlparser.h \
-    controller/networkdialog.h
+    controller/networkdialog.h \
 
 RESOURCES += icons.qrc

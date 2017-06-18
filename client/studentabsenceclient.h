@@ -1,9 +1,10 @@
 #pragma once
 
+#include <QDialog>
 #include <QTcpSocket>
 #include <QWidget>
 
-#include "model/studentabsencemodel.h"
+#include "view/proxymodel.h"
 
 class QLineEdit;
 class QTextEdit;
@@ -15,21 +16,32 @@ enum Request{
     NEW,
     CHOOSE_FILE,
     SAVE,
-    OPEN
+    OPEN,
+    ENTRIES
 };
 enum Answer{
     RESPONSE,
     MODEL,
+    MODEL_SIZE,
     FILES,
+    SEARCH_RES,
+    REMOVE_RES
 };
-
-class StudentAbsenceClient : public QWidget
+class StudentAbsenceClient : public QDialog
 {
     Q_OBJECT
 
 public:
-    StudentAbsenceClient(StudentAbsenceModel *model_, QWidget *parent = Q_NULLPTR);
+    StudentAbsenceClient(ProxyModel *model_, QWidget *parent = Q_NULLPTR);
     ~StudentAbsenceClient();
+
+    inline void setCurrentFileName(const QString &fileName)
+    { currentFileName = fileName; }
+    inline const QString& getCurrentFileName()
+    { return currentFileName; }
+
+    inline bool isConnected() const
+    { return connected; }
 
 public slots:
     void sendAddRequest(const StudentEntry& entry);
@@ -38,12 +50,15 @@ public slots:
     void sendFilesRequest();
     void sendNewRequest();
     void sendSaveRequest();
-    void sendOpenRequest();
+    void sendSaveAsRequest();
+    void sendOpenRequest(qint64 begin, qint64 count);
+    void sendEntriesRequest();
 
 signals:
     void connectedToServer();
     void disconnectedFromServer();
-    void filesReady();
+    void searchResultReturned(ProxyModel::Students);
+    void removeResultReturned(qint64);
 
 protected:
     virtual void closeEvent(QCloseEvent *);
@@ -57,12 +72,18 @@ private slots:
 private:
     void locateWidgets();
 
+    Q_SIGNAL void filesReady();
+
 private:
     QTcpSocket *tcpSocket;
-    StudentAbsenceModel *model;
+    ProxyModel *model;
     QStringList filesList;
     QLineEdit *hostNameEdt;
     QLineEdit *portEdt;
     QTextEdit *logEdt;
     qint16 nextBlockSize;
+
+    QString currentFileName;
+
+    bool connected;
 };

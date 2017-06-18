@@ -17,15 +17,15 @@ enum SearchPattern{
 class ModelController
 {
 public:
-    ModelController(StudentAbsenceModel *controlModel = Q_NULLPTR);
+    ModelController(Students *controlModel = Q_NULLPTR);
     ~ModelController();
 
-    StudentAbsenceModel *getModel() const;
-    void setModel(StudentAbsenceModel *value);
+    Students *getModel() const;
+    void setModel(Students *value);
 
-    void addEntry(qint64 row, const StudentEntry &entry);
-    StudentAbsenceModel::students findEntries(SearchPattern, const QStringList&);
-    void removeEntries(SearchPattern, const QStringList&);
+    void addEntry(const StudentEntry &entry);
+    Students findEntries(SearchPattern, const QStringList&);
+    qint64 removeEntries(SearchPattern, const QStringList&);
 
     void clearModel();
     bool saveModel(QString fileName);
@@ -33,7 +33,7 @@ public:
 
 private:
     std::function<bool (const StudentEntry &)> condition(SearchPattern pattern);
-    StudentAbsenceModel *model;
+    Students *model;
     XMLParser *xmlParser;
     const QStringList *searchList;
 };

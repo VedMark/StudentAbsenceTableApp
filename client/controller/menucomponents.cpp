@@ -26,6 +26,9 @@ MenuComponents::MenuComponents()
     saveAsTable = new QAction(QObject::tr("&Сохранить как"), Q_NULLPTR);
     saveAsTable->setShortcut(QKeySequence::SaveAs);
 
+    closeTable = new QAction(QObject::tr("&Закрыть таблицу"), Q_NULLPTR);
+    closeTable->setIcon(QIcon(":/images/closeTable.png"));
+
     exitApp = new QAction(QObject::tr("&Выйти"), Q_NULLPTR);
     exitApp->setShortcut(QKeySequence::Quit);
     exitApp->setIcon(QIcon(":/images/exit.png"));
@@ -67,6 +70,7 @@ MenuComponents::~MenuComponents()
     delete openTable;
     delete saveTable;
     delete saveAsTable;
+    delete closeTable;
     delete exitApp;
 
     delete prevPage;

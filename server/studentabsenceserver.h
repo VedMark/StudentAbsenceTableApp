@@ -1,9 +1,10 @@
 #pragma once
 
+#include <QString>
 #include <QWidget>
-#include <QDir>
 
-class StudentAbsenceModel;
+#include "model/studentabsencemodel.h"
+
 class ModelController;
 
 class QTcpServer;
@@ -17,12 +18,16 @@ enum Request{
     NEW,
     CHOOSE_FILE,
     SAVE,
-    OPEN
+    OPEN,
+    ENTRIES
 };
 enum Answer{
     RESPONSE,
     MODEL,
+    MODEL_SIZE,
     FILES,
+    SEARCH_RES,
+    REMOVE_RES
 };
 
 class StudentAbsenceServer : public QWidget
@@ -38,19 +43,23 @@ public slots:
     void readClient();
 
 private:
-    void sendModel(QTcpSocket *socket);
     void sendResponce(QTcpSocket *socket, const QString &text);
-    void sendStringList(QTcpSocket *socket, const QStringList &text);
+    void sendEntries(QTcpSocket *socket, qint64 begin, qint64 count);
+    void sendModelSize(QTcpSocket *socket);
+    void sendStringList(QTcpSocket *socket);
+    void sendSearchResult(QTcpSocket *socket, const Students list);
+    void sendRemoveResult(QTcpSocket * socket, qint64 count);
 
 private slots:
     void startServer();
     void stopServer();
 
 private:
+    static const QString DATA_DIR_PATH;
+
     QTcpServer *tcpServer;
-    StudentAbsenceModel *model;
+    Students model;
     ModelController *controller;
-    QDir dataDir;
     QTextEdit *logEdt;
     qint64 port;
     qint16 nextBlockSize;

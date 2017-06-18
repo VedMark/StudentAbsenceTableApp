@@ -24,7 +24,7 @@ public:
 class XMLParser
 {
 public:
-    XMLParser(StudentAbsenceModel *model);
+    XMLParser(Students *model);
     ~XMLParser();
 
     bool read(const QString& file);
@@ -43,5 +43,5 @@ private:
 
     void writeEntry(QXmlStreamWriter &writer, const StudentEntry &entry);
 
-    StudentAbsenceModel *model;
+    Students *model;
 };

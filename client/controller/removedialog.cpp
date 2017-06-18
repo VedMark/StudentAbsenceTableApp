@@ -6,66 +6,64 @@
 
 #include <algorithm>
 
-RemoveDialog::RemoveDialog(StudentAbsenceModel *model, StudentAbsenceClient *client_, QWidget *parent)
+RemoveDialog::RemoveDialog(ProxyModel *model, StudentAbsenceClient *client_, QWidget *parent)
     : AbstractFindDialog(model, client_, parent)
 {
-    setWindowTitle("Удалить записи");
+    setWindowTitle(tr("Удалить записи"));
     setWindowIcon(QIcon(":/images/removeEntries.png"));
-    okBtn->setText("Удалить");
+    okBtn->setText(tr("Удалить"));
+
+    connect(closeBtn, SIGNAL( clicked(bool) ), SLOT( close() ) );
 }
 
 RemoveDialog::~RemoveDialog()
 {}
 
+void RemoveDialog::displayResult(qint64 count)
+{
+    if(count == 0){
+        QMessageBox::information(this, tr("Внимание!"),
+                                 tr("Данных по запросу не найдено"),
+                                 QMessageBox::Ok);
+    }
+    else{
+        QMessageBox::information(
+                    this, "",
+                    "Удалено записей по запросу: " +
+                    QString::number(count),
+                    QMessageBox::Ok);
+        emit notNoneResult();
+    }
+}
+
+void RemoveDialog::closeEvent(QCloseEvent *)
+{
+    this->~RemoveDialog();
+}
 
 void RemoveDialog::handleOkBtn()
 {
     if(verifyEdits())
     {
-        StudentAbsenceModel::students &studentList = model->getStudentEntryList();
-        auto length_before = model->getStudentEntryList().length();
-
-        std::function<bool (const StudentEntry &)> cond = condition();
-
-        studentList.erase(
-                    std::remove_if(studentList.begin(),studentList.end(), cond),
-                    studentList.end());
-
-        auto length_after = model->getStudentEntryList().length();
-        model->removeRows(length_after, length_before - length_after, QModelIndex());
-
-        if(length_before - length_after == 0){
-            QMessageBox::information(this, tr("Внимание!"),
-                                     tr("Данных по запросу не найдено"),
-                                     QMessageBox::Ok);
-            if(client){
-                QStringList list;
-                switch ((SearchPattern)stackedWidget->currentIndex()) {
-                case FIRST:
-                    list.append(surnameEdt1->text());
-                    list.append(groupEdt->text());
-                    break;
-                case SECOND:
-                    list.append(surnameEdt2->text());
-                    list.append(QString::number(absKindCmb->currentIndex()));
-                    list.append(numAbsEdt->text());
-                    break;
-                case THIRD:
-                    list.append(surnameEdt3->text());
-                    list.append(lowBoundEdt->text());
-                    list.append(topBoundEdt->text());
-                    break;
-                }
-                client->sendRemoveRequest((SearchPattern)stackedWidget->currentIndex(),
-                                        list);
-            }
+        QStringList list;
+        switch ((SearchPattern)stackedWidget->currentIndex()) {
+        case FIRST:
+            list.append(surnameEdt1->text());
+            list.append(groupEdt->text());
+            break;
+        case SECOND:
+            list.append(surnameEdt2->text());
+            list.append(QString::number(absKindCmb->currentIndex()));
+            list.append(numAbsEdt->text());
+            break;
+        case THIRD:
+            list.append(surnameEdt3->text());
+            list.append(lowBoundEdt->text());
+            list.append(topBoundEdt->text());
+            break;
         }
-        else
-            QMessageBox::information(
-                this, "",
-                "Удалено записей по запросу: " +
-                QString::number(length_before - length_after),
-                QMessageBox::Ok);
+        client->sendRemoveRequest((SearchPattern)stackedWidget->currentIndex(),
+                                list);
     }
     else
         QMessageBox::information(this, tr("Внимание!"),

@@ -3,10 +3,9 @@
 #include <QMessageBox>
 
 #include "adddialog.h"
-#include "../controller/modelcontroller.h"
 
 
-AddDialog::AddDialog(StudentAbsenceModel *model_, StudentAbsenceClient *client_, QWidget *parent)
+AddDialog::AddDialog(ProxyModel *model_, StudentAbsenceClient *client_, QWidget *parent)
     :QDialog(parent), client(client_)
 {
     model = model_;
@@ -50,37 +49,24 @@ AddDialog::AddDialog(StudentAbsenceModel *model_, StudentAbsenceClient *client_,
 AddDialog::~AddDialog()
 {}
 
+void AddDialog::closeEvent(QCloseEvent *)
+{
+    this->~AddDialog();
+}
+
 void AddDialog::createEntry()
 {
     if(verifyEdits())
     {
-        model->insertRow(model->entriesSize());
-
-        model->setData(
-                    model->index(model->entriesSize() - 1, StudentAbsenceModel::NAME, QModelIndex()),
-                    QVariant(surnameEdt->text() + " " + nameEdt->text() + " " + patronymicEdt->text()), Qt::EditRole);
-        model->setData(
-                    model->index(model->entriesSize() - 1, StudentAbsenceModel::GROUP, QModelIndex()),
-                    QVariant(groupEdt->text()), Qt::EditRole);
-        model->setData(
-                    model->index(model->entriesSize() - 1, StudentAbsenceModel::ILLNESS, QModelIndex()),
-                    QVariant(illnessEdt->text().toInt()), Qt::EditRole);
-        model->setData(
-                    model->index(model->entriesSize() - 1, StudentAbsenceModel::ANOTHER, QModelIndex()),
-                    QVariant(anotherEdt->text().toInt()), Qt::EditRole);
-        model->setData(
-                    model->index(model->entriesSize() - 1, StudentAbsenceModel::HOOKY, QModelIndex()),
-                    QVariant(hookyEdt->text().toInt()), Qt::EditRole);
+        client->sendAddRequest(StudentEntry(RussianFullName(surnameEdt->text(), nameEdt->text(), patronymicEdt->text()),
+                                         Group(groupEdt->text()),
+                                         Absence(illnessEdt->text().toInt(), anotherEdt->text().toInt(), hookyEdt->text().toInt())));
+        emit notNoneResult();
     }
     else
         QMessageBox::information(this, tr("Внимание!"),
                                  tr("Введены некорректные данные!"),
                                  QMessageBox::Ok);
-    if(client){
-        client->sendAddRequest(StudentEntry(RussianFullName(surnameEdt->text(), nameEdt->text(), patronymicEdt->text()),
-                                            Group(groupEdt->text()),
-                                            Absence(illnessEdt->text().toInt(), anotherEdt->text().toInt(), hookyEdt->text().toInt())));
-    }
 }
 
 void AddDialog::changeNumFilledEdits()

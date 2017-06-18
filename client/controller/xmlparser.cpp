@@ -13,7 +13,7 @@ const QString XMLParser::XML_TAG_ILLNESS = "illness";
 const QString XMLParser::XML_TAG_ANOTHER = "another";
 const QString XMLParser::XML_TAG_HOOKY = "hooky";
 
-XMLParser::XMLParser(StudentAbsenceModel *model_)
+XMLParser::XMLParser(ProxyModel *model_)
     : model(model_)
 {}
 
@@ -29,7 +29,7 @@ bool XMLParser::read(const QString& file)
 
     QXmlStreamReader reader(&inFile);
 
-    StudentAbsenceModel::students newDataList;
+    ProxyModel::Students newDataList;
     StudentEntry *entry;
 
     while(!reader.atEnd())

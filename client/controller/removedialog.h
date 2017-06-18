@@ -2,16 +2,23 @@
 
 #include "../controller/abstractfinddialog.h"
 
+
 class RemoveDialog : public AbstractFindDialog
 {
     Q_OBJECT
 
 public:
-    RemoveDialog(StudentAbsenceModel *model, StudentAbsenceClient *client_, QWidget *parent = Q_NULLPTR);
+    RemoveDialog(ProxyModel *model, StudentAbsenceClient *client_, QWidget *parent = Q_NULLPTR);
     ~RemoveDialog();
 
+public slots:
+    void displayResult(qint64 count);
+
+signals:
+    void notNoneResult();
+
 protected:
-    void displayStudentEntryList(StudentAbsenceModel::students);
+    void closeEvent(QCloseEvent *);
 
 protected slots:
     void handleOkBtn();

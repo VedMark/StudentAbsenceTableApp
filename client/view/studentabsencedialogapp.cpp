@@ -3,8 +3,11 @@
 #include "../controller/menucomponents.h"
 #include "../studentabsenceclient.h"
 
+#include <QApplication>
 #include <QContextMenuEvent>
+#include <QDesktopWidget>
 #include <QFileDialog>
+#include <QFrame>
 #include <QGraphicsColorizeEffect>
 #include <QLayout>
 #include <QMessageBox>
@@ -15,27 +18,30 @@
 
 StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     : QMainWindow(parent), addDialog(Q_NULLPTR), findDialog(Q_NULLPTR), removeDialog(Q_NULLPTR),
-      client(Q_NULLPTR), workMode(LOCAL), documentModified(false)
+      client(Q_NULLPTR), documentModified(false), documentAvailable(false)
 {
-    model = new StudentAbsenceModel(this);
+    model = new ProxyModel(this);
 
     view = new QTableView(this);
-    controller = new ModelController(model);
-    proxyModel = new ProxyModel(this);
-    proxyModel->setSourceModel(model);
-    view->setModel(proxyModel);
 
     header = new HierarchicalHeaderView(Qt::Horizontal, this);
     header->setSectionResizeMode(QHeaderView::Fixed);
     header->setStretchLastSection(true);
     header->setDefaultSectionSize(30);
     view->setHorizontalHeader(header);
+    view->horizontalHeader()->hide();
+
+    view->setModel(model);
 
     createMainWidget();
     setStatusBar(new QStatusBar(this));
 
-    modeLbl = new QLabel("локальный режим", this);
+    modeLbl = new QLabel("отключено от сервера", this);
     statusBar()->addPermanentWidget(modeLbl);
+
+
+    client = new StudentAbsenceClient(model, this);
+    showConnectWindow();
 
     createToolBar();
     createMenu();
@@ -50,9 +56,7 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
 }
 
 StudentAbsenceTableApp::~StudentAbsenceTableApp()
-{
-    delete controller;
-}
+{}
 
 void StudentAbsenceTableApp::contextMenuEvent(QContextMenuEvent *mouse_pointer)
 {
@@ -64,147 +68,112 @@ void StudentAbsenceTableApp::closeEvent(QCloseEvent *)
     close();
 }
 
-void StudentAbsenceTableApp::paintEvent(QPaintEvent *event)
-{
-    proxyModel->resetModel();
-    QMainWindow::paintEvent(event);
-}
-
 void StudentAbsenceTableApp::resizeEvent(QResizeEvent *)
 {
-    view->setColumnWidth(0, width() / 3);
-    view->setColumnWidth(1, width() / 6);
-    view->setColumnWidth(2, width() / 8);
-    view->setColumnWidth(3, width() / 8);
-    view->setColumnWidth(4, width() / 6);
+    setColumnsSize();
 }
 
 bool StudentAbsenceTableApp::newFile()
 {
-    if(!documentModified || agreedToContinue()){
-        controller->clearModel();
-        setCurrentFileName(tr(""));
-        documentModified = false;
+    if(client->isConnected()){
+        if(agreedToContinue()){
+            client->sendNewRequest();
+            documentModified = false;
+        }
+        model->reset();
+        enableTableView();
         return true;
     }
-    if(workMode == NETWORK)
-        client->sendNewRequest();
+    else
+        QMessageBox::information(this, tr("Внимание"),
+                                 tr("Невозможно совершить дейсвие:\n отсутствует соединение с сервером!"),
+                                 QMessageBox::Ok);
     return false;
 }
 
 bool StudentAbsenceTableApp::open()
 {
-    if(workMode == LOCAL){
+    if(client->isConnected()){
         if(agreedToContinue()){
-            auto openFileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Открыть файл"),
-                                                    tr("/home/vedmark"),
-                                                    tr("Файл данных (*.xml)"));
-            if(!openFileName.isEmpty())
-                return loadFile(openFileName);
-
+            model->setPage(0);
+            client->sendOpenRequest((model->getPage() - 1) * model->getEntriesPerPage(),
+                                    model->getEntriesPerPage());
+            documentModified = false;
         }
-    }
-    if(workMode == NETWORK){
-        client->sendOpenRequest();
         return true;
     }
+    else
+        QMessageBox::information(this, tr("Внимание"),
+                                 tr("Невозможно совершить дейсвие:\n отсутствует соединение с сервером!"),
+                                 QMessageBox::Ok);
     return false;
 }
 
 bool StudentAbsenceTableApp::save()
 {
-    if(workMode == LOCAL){
-        if(currentFileName.isEmpty())
-            return saveAs();
+    if(client->isConnected()){
+        if(documentAvailable){
+            client->sendSaveRequest();
+            documentModified = false;
+        }
         else
-            return saveFile(currentFileName);
+            QMessageBox::information(this, tr("Внимание"),
+                                     tr("Для совершения действия необходим открытый документ"),
+                                     QMessageBox::Ok);
     }
-    else{
-        client->sendSaveRequest();
-        return true;
-    }
+    else
+        QMessageBox::information(this, tr("Внимание"),
+                                 tr("Невозможно совершить дейсвие:\n отсутствует соединение с сервером!"),
+                                 QMessageBox::Ok);
+    return true;
 }
 
 bool StudentAbsenceTableApp::saveAs()
 {
-    if(workMode == LOCAL){
-        auto fileName = QFileDialog::getSaveFileName(this,
-                                                    tr("Сохранить файл"),
-                                                    tr("/home/vedmark"),
-                                                    tr("Файл данных (*.xml)"));
-        if(fileName.isEmpty())
-            return false;
-        if(!fileName.endsWith(".xml"))
-            fileName += ".xml";
-        return saveFile(fileName);
+    if(client->isConnected()){
+        if(documentAvailable){
+            client->sendSaveAsRequest();
+            documentModified = false;
+        }
+        else
+            QMessageBox::information(this, tr("Внимание"),
+                                     tr("Для совершения действия необходим открытый документ"),
+                                     QMessageBox::Ok);
     }
-    else{
-        client->sendSaveRequest();
-        return true;
-    }
-}
-
-bool StudentAbsenceTableApp::loadFile(const QString &fileName)
-{
-    auto xmlParser = XMLParser(model);
-    try
-    {
-        xmlParser.read(fileName);
-        setCurrentFileName(fileName);
-        statusBar()->showMessage(tr("Файл загружен"), 2000);
-        documentModified = false;
-    }
-    catch(FileOpenException)
-    {
-        QMessageBox::warning(this, tr("Ошибка!"),
-                             tr("Ошибка чтения файла!"),
-                             QMessageBox::Ok);
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
-        return false;
-    }
-    catch(FileReadException)
-    {
-        QMessageBox::warning(this, tr("Ошибка!"),
-                             tr("Ошибка чтения файла!"),
-                             QMessageBox::Ok);
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
-        return false;
-    }
-
-    proxyModel->showPage(1);
+    else
+        QMessageBox::information(this, tr("Внимание"),
+                                 tr("Невозможно совершить дейсвие:\n отсутствует соединение с сервером!"),
+                                 QMessageBox::Ok);
     return true;
 }
 
-bool StudentAbsenceTableApp::saveFile(const QString &fileName)
+void StudentAbsenceTableApp::showStartScreen()
 {
-    auto xmlParser = XMLParser(model);
-    try
-    {
-        xmlParser.write(fileName);
+    if(client->isConnected()){
+        if(agreedToContinue())
+            disableTableView();
+    }
+    else
+        QMessageBox::information(this, tr("Внимание"),
+                                 tr("Невозможно совершить дейсвие:\n отсутствует соединение с сервером!"),
+                                 QMessageBox::Ok);
+}
 
-        setCurrentFileName(fileName);
-        statusBar()->showMessage(tr("Файл сохранён"), 2000);
-        documentModified = false;
-    }
-    catch(FileOpenException)
-    {
-        QMessageBox::warning(this, tr("Ошибка!"),
-                             tr("Ошибка открытия файла!"),
-                             QMessageBox::Ok);
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
-        return false;
-    }
-    catch(FileReadException)
-    {
-        QMessageBox::warning(this, tr("Ошибка!"),
-                             tr("Ошибка открытия файла!"),
-                             QMessageBox::Ok);
-        statusBar()->showMessage(tr("Загрузка отменена"), 2000);
-        return false;
-    }
+void StudentAbsenceTableApp::disableTableView()
+{
+    model->reset();
+    view->horizontalHeader()->hide();
+    buttonsFrame->hide();
+    documentModified = false;
+    documentAvailable = false;
+}
 
-    return true;
+void StudentAbsenceTableApp::enableTableView()
+{
+    view->horizontalHeader()->show();
+    setColumnsSize();
+    buttonsFrame->show();
+    documentAvailable = true;
 }
 
 bool StudentAbsenceTableApp::agreedToContinue()
@@ -224,66 +193,80 @@ bool StudentAbsenceTableApp::agreedToContinue()
     return true;
 }
 
-void StudentAbsenceTableApp::setCurrentFileName(const QString &fileName)
-{
-    currentFileName = fileName;
-}
-
 void StudentAbsenceTableApp::addEntry()
 {
-    if(addDialog != Q_NULLPTR)
-        delete addDialog;
-    if(workMode == LOCAL)
-        addDialog = new AddDialog(model, Q_NULLPTR, this);
+    if(client->isConnected()){
+        if(documentAvailable){
+            addDialog = new AddDialog(model, client, this);
+            addDialog->show();
+            addDialog->raise();
+            addDialog->activateWindow();
+
+            connect(addDialog, &AddDialog::notNoneResult, [this] {
+                 documentModified = true;
+            });
+        }
+        else
+            QMessageBox::information(this, tr("Внимание"),
+                                     tr("Для совершения действия необходим открытый документ"),
+                                     QMessageBox::Ok);
+    }
     else
-        addDialog = new AddDialog(model, client, this);
-    addDialog->show();
-    addDialog->raise();
-    addDialog->activateWindow();
+        QMessageBox::information(this, tr("Внимание"),
+                                 tr("Невозможно совершить дейсвие:\n отсутствует соединение с сервером!"),
+                                 QMessageBox::Ok);
 }
 
 void StudentAbsenceTableApp::findEntry()
 {
-    if(findDialog != Q_NULLPTR)
-        delete findDialog;
-    if(workMode == LOCAL)
-        findDialog = new FindDialog(model, Q_NULLPTR, this);
+    if(client->isConnected()){
+        if(documentAvailable){
+            findDialog = new FindDialog(model, client, this);
+            findDialog->show();
+            findDialog->raise();
+            findDialog->activateWindow();
+            connect(client, SIGNAL( searchResultReturned(ProxyModel::Students) ),
+                    findDialog, SLOT( displayResult(ProxyModel::Students) ) );
+        }
+        else
+            QMessageBox::information(this, tr("Внимание"),
+                                     tr("Для совершения действия необходим открытый документ"),
+                                     QMessageBox::Ok);
+    }
     else
-        findDialog = new FindDialog(model, client, this);
-
-    findDialog->show();
-    findDialog->raise();
-    findDialog->activateWindow();
+        QMessageBox::information(this, tr("Внимание"),
+                                 tr("Невозможно совершить дейсвие:\n отсутствует соединение с сервером!"),
+                                 QMessageBox::Ok);
 }
 
 void StudentAbsenceTableApp::removeEntry()
 {
-    if(removeDialog != Q_NULLPTR)
-        delete removeDialog;
-    if(workMode == LOCAL)
-        removeDialog = new RemoveDialog(model, Q_NULLPTR, this);
+    if(client->isConnected()){
+        if(documentAvailable){
+            removeDialog = new RemoveDialog(model, client, this);
+            removeDialog->show();
+            removeDialog->raise();
+            removeDialog->activateWindow();
+            connect(client, SIGNAL( removeResultReturned(qint64) ),
+                    removeDialog, SLOT( displayResult(qint64) ) );
+            connect(removeDialog, &RemoveDialog::notNoneResult, [this] {
+                 documentModified = true;
+            });
+        }
+        else
+            QMessageBox::information(this, tr("Внимание"),
+                                     tr("Для совершения действия необходим открытый документ"),
+                                     QMessageBox::Ok);
+    }
     else
-        removeDialog = new RemoveDialog(model, client, this);
-
-    removeDialog->show();
-    removeDialog->raise();
-    removeDialog->activateWindow();
+        QMessageBox::information(this, tr("Внимание"),
+                                 tr("Невозможно совершить дейсвие:\n отсутствует соединение с сервером!"),
+                                 QMessageBox::Ok);
 }
 
 void StudentAbsenceTableApp::showConnectWindow()
 {
-    if(client == Q_NULLPTR)
-        client = new StudentAbsenceClient(model);
     client->show();
-
-    connect(client, &StudentAbsenceClient::connectedToServer, [this] {
-        workMode = NETWORK;
-        modeLbl->setText("подключено к серверу");
-    });
-    connect(client, &StudentAbsenceClient::disconnectedFromServer, [this] {
-        workMode = LOCAL;
-        modeLbl->setText("локальный режим");
-    });
 }
 
 void StudentAbsenceTableApp::createMainWidget()
@@ -318,8 +301,8 @@ void StudentAbsenceTableApp::createMainWidget()
     goToPageEdt = new QLineEdit(this);
     goToPageEdt->setMaximumWidth(50);
 
-    pageLbl = new QLabel(QString::number(proxyModel->maxPage()), this);
-    currentPageLbl = new QLabel(QString::number(proxyModel->getPage()), this);
+    pageLbl = new QLabel(QString::number(model->maxPage()), this);
+    currentPageLbl = new QLabel(QString::number(model->getPage()), this);
 
     entriesPerPageBtn = new QPushButton(QIcon(":/images/entriesPerPage.png"), "Изменить", this);
     entriesPerPageBtn->addAction(MenuComponents::instance().entriesPerPage);
@@ -327,7 +310,7 @@ void StudentAbsenceTableApp::createMainWidget()
     entriesPerPageBtn->setEnabled(true);
     entriesPerPageEdt = new QLineEdit(this);
     entriesPerPageEdt->setMaximumWidth(50);
-    entriesPerPageLbl = new QLabel(QString::number(proxyModel->getEntriesPerPage()), this);
+    entriesPerPageLbl = new QLabel(QString::number(model->getEntriesPerPage()), this);
 
     entriesLbl = new QLabel(QString::number(model->entriesSize()), this);
 
@@ -355,6 +338,12 @@ void StudentAbsenceTableApp::createMainWidget()
     buttonsLayout->addWidget(entriesPerPageBtn);
     buttonsLayout->addStretch(20);
 
+    buttonsFrame = new QFrame(this);
+    buttonsFrame->setLayout(buttonsLayout);
+    buttonsFrame->setFrameStyle(QFrame::NoFrame);
+    buttonsFrame->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    buttonsFrame->hide();
+
     setTabOrder(goToPageEdt, goToPageBtn);
     setTabOrder(goToPageBtn, entriesPerPageEdt);
     setTabOrder(entriesPerPageEdt, entriesPerPageBtn);
@@ -362,7 +351,7 @@ void StudentAbsenceTableApp::createMainWidget()
     QVBoxLayout* mainLayout = new QVBoxLayout;
 
     mainLayout->addWidget(view);
-    mainLayout->addLayout(buttonsLayout);
+    mainLayout->addWidget(buttonsFrame);
 
     centralWidget()->setLayout(mainLayout);
 }
@@ -374,6 +363,7 @@ void StudentAbsenceTableApp::createToolBar()
     toolBar->addAction(MenuComponents::instance().newTable);
     toolBar->addAction(MenuComponents::instance().openTable);
     toolBar->addAction(MenuComponents::instance().saveTable);
+    toolBar->addAction(MenuComponents::instance().closeTable);
     toolBar->addSeparator();
     toolBar->addAction(MenuComponents::instance().addEntries);
     toolBar->addAction(MenuComponents::instance().findEntries);
@@ -391,6 +381,7 @@ void StudentAbsenceTableApp::createMenu()
     fileMenu->addAction(MenuComponents::instance().openTable);
     fileMenu->addAction(MenuComponents::instance().saveTable);
     fileMenu->addAction(MenuComponents::instance().saveAsTable);
+    fileMenu->addAction(MenuComponents::instance().closeTable);
     fileMenu->addSeparator();
     fileMenu->addAction(MenuComponents::instance().exitApp);
     menuBar->addMenu(fileMenu);
@@ -422,6 +413,7 @@ void StudentAbsenceTableApp::createContextMenu()
     contextMenu->addAction(MenuComponents::instance().addEntries);
     contextMenu->addAction(MenuComponents::instance().findEntries);
     contextMenu->addAction(MenuComponents::instance().removeEntries);
+    contextMenu->addAction(MenuComponents::instance().closeTable);
 
     contextMenu->addSeparator();
 
@@ -431,12 +423,22 @@ void StudentAbsenceTableApp::createContextMenu()
     contextMenu->addAction(MenuComponents::instance().lastPage);
 }
 
+void StudentAbsenceTableApp::setColumnsSize()
+{
+    view->setColumnWidth(0, width() / 3);
+    view->setColumnWidth(1, width() / 6);
+    view->setColumnWidth(2, width() / 8);
+    view->setColumnWidth(3, width() / 8);
+    view->setColumnWidth(4, width() / 6);
+}
+
 void StudentAbsenceTableApp::setConnections()
 {
     connect(MenuComponents::instance().newTable, SIGNAL( triggered(bool) ), SLOT( newFile() ) );
     connect(MenuComponents::instance().openTable, SIGNAL( triggered(bool) ), SLOT( open() ) );
     connect(MenuComponents::instance().saveTable, SIGNAL( triggered(bool) ), SLOT( save() ) );
     connect(MenuComponents::instance().saveAsTable, SIGNAL( triggered(bool) ), SLOT( saveAs() ) );
+    connect(MenuComponents::instance().closeTable, SIGNAL( triggered(bool) ), SLOT( showStartScreen() ) );
     connect(MenuComponents::instance().exitApp, SIGNAL( triggered(bool) ), SLOT( close() ) );
 
     connect(MenuComponents::instance().addEntries, SIGNAL( triggered(bool) ), SLOT( addEntry() ) );
@@ -444,115 +446,84 @@ void StudentAbsenceTableApp::setConnections()
     connect(MenuComponents::instance().removeEntries, SIGNAL( triggered(bool) ), SLOT( removeEntry() ) );
 
     connect(MenuComponents::instance().prevPage, &QAction::triggered, [this] () {
-        proxyModel->showPage(proxyModel->getPage() - 1);
-        MenuComponents::instance().enableFirstPage(proxyModel->getPage() - 1 != 1);
-        MenuComponents::instance().enablePrevPage(proxyModel->getPage() - 1 != 1);
+        model->setPage(model->getPage() - 1);
+        client->sendEntriesRequest();
         view->setFocus();
     });
     connect(MenuComponents::instance().nextPage, &QAction::triggered, [this] () {
-        proxyModel->showPage(proxyModel->getPage() + 1);
-        MenuComponents::instance().enableNextPage(proxyModel->getPage() + 1 < proxyModel->maxPage());
-        MenuComponents::instance().enableLastPage(proxyModel->getPage() + 1 < proxyModel->maxPage());
+        model->setPage(model->getPage() + 1);
+        client->sendEntriesRequest();
         view->setFocus();
     });
     connect(MenuComponents::instance().firstPage, &QAction::triggered, [this] () {
-        proxyModel->showPage(1);
-        MenuComponents::instance().enableFirstPage(false);
-        MenuComponents::instance().enablePrevPage(false);
+        model->setPage(1);
+        client->sendEntriesRequest();
         view->setFocus();
     });
     connect(MenuComponents::instance().lastPage, &QAction::triggered, [this] () {
-        proxyModel->showPage(proxyModel->maxPage());
-        MenuComponents::instance().enableNextPage(false);
-        MenuComponents::instance().enableLastPage(false);
+        model->setPage(model->maxPage());
+        client->sendEntriesRequest();
         view->setFocus();
     });
     connect(prevPageBtn, &QPushButton::clicked, [this] () {
-        proxyModel->showPage(proxyModel->getPage() - 1);
-        MenuComponents::instance().enableFirstPage(proxyModel->getPage() - 1 != 1);
-        MenuComponents::instance().enablePrevPage(proxyModel->getPage() - 1 != 1);
+        model->setPage(model->getPage() - 1);
+        client->sendEntriesRequest();
         view->setFocus();
     });
     connect(nextPageBtn, &QPushButton::clicked, [this] () {
-        proxyModel->showPage(proxyModel->getPage() + 1);
-        MenuComponents::instance().enableNextPage(proxyModel->getPage() < proxyModel->maxPage());
-        MenuComponents::instance().enableLastPage(proxyModel->getPage() < proxyModel->maxPage());
+        model->setPage(model->getPage() + 1);
+        client->sendEntriesRequest();
         view->setFocus();
     });
     connect(firstPageBtn, &QPushButton::clicked, [this] () {
-        proxyModel->showPage(1);
-        MenuComponents::instance().enableFirstPage(false);
-        MenuComponents::instance().enablePrevPage(false);
+        model->setPage(1);
+        client->sendEntriesRequest();
         view->setFocus();
     });
     connect(lastPageBtn, &QPushButton::clicked, [this] () {
-        proxyModel->showPage(proxyModel->maxPage());
-        MenuComponents::instance().enableNextPage(false);
-        MenuComponents::instance().enableLastPage(false);
+        model->setPage(model->maxPage());
+        client->sendEntriesRequest();
         view->setFocus();
     });
 
     connect(MenuComponents::instance().connectToServer, SIGNAL( triggered(bool) ), SLOT( showConnectWindow() ) );
 
-    std::function<void ()> enableButtons = [&] {
-        if(proxyModel->getPage() >= proxyModel->maxPage()){
-            proxyModel->showPage(proxyModel->maxPage());
-            firstPageBtn->setEnabled(proxyModel->getPage() != 1);
-            prevPageBtn->setEnabled(proxyModel->getPage() != 1);
-            nextPageBtn->setEnabled(false);
-            lastPageBtn->setEnabled(false);
-        }
-        else{
-            firstPageBtn->setEnabled(proxyModel->getPage() != 1);
-            prevPageBtn->setEnabled(proxyModel->getPage() != 1);
-            nextPageBtn->setEnabled(true);
-            lastPageBtn->setEnabled(true);
-        }
-        view->setFocus();
-    };
-    connect(model, &StudentAbsenceModel::rowsInserted, enableButtons);
-    connect(model, &StudentAbsenceModel::rowsRemoved, enableButtons);
-
-    connect(model, &StudentAbsenceModel::rowsInserted, [&] {
-        entriesLbl->setText(QString::number(model->entriesSize()));
-        pageLbl->setText(QString::number(proxyModel->maxPage()));
-        currentPageLbl->setText(QString::number(proxyModel->getPage()));
-    });
-    connect(model, &StudentAbsenceModel::rowsRemoved, [&] {
-        entriesLbl->setText(QString::number(model->entriesSize()));
-        pageLbl->setText(QString::number(proxyModel->maxPage()));
-        currentPageLbl->setText(QString::number(proxyModel->getPage()));
-    });
-
-    connect(proxyModel, &ProxyModel::entriesPerPageChanged, [&] (qint64 value) {
+    connect(model, &ProxyModel::entriesPerPageChanged, [&] (qint64 value) {
         entriesPerPageLbl->setText(QString::number(value));
-        pageLbl->setText(QString::number(proxyModel->maxPage()));
+        pageLbl->setText(QString::number(model->maxPage()));
+        client->sendEntriesRequest();
     });
-
-    connect(proxyModel, &ProxyModel::pageChanged, [&] (qint64 page) {
+    connect(model, &ProxyModel::pageChanged, [&] (qint64 page) {
         firstPageBtn->setEnabled(page != 1);
         prevPageBtn->setEnabled(page != 1);
-        nextPageBtn->setEnabled(page < proxyModel->maxPage());
-        lastPageBtn->setEnabled(page < proxyModel->maxPage());
+        nextPageBtn->setEnabled(page < model->maxPage());
+        lastPageBtn->setEnabled(page < model->maxPage());
         currentPageLbl->setText(QString::number(page));
     });
+    connect(model, &ProxyModel::sizeChanged, [this] (qint64 size) {
+        entriesLbl->setText(QString::number(size));
+        pageLbl->setText(QString::number(model->maxPage()));
+        qint64 page = currentPageLbl->text().toLongLong();
+        firstPageBtn->setEnabled(page != 1);
+        prevPageBtn->setEnabled(page != 1);
+        nextPageBtn->setEnabled(page < model->maxPage());
+        lastPageBtn->setEnabled(page < model->maxPage());
+    });
+    connect(model, SIGNAL( dataChanged(QModelIndex,QModelIndex,QVector<int>) ), SLOT( enableTableView() ) );
 
     connect(goToPageBtn, &QPushButton::clicked, [&] {
         auto ok = true;
         auto num = goToPageEdt->text().toLongLong(&ok);
-        if(!(ok) || num < 1 || num > proxyModel->maxPage()){
+        if(!(ok) || num < 1 || num > model->maxPage()){
             auto effect = new QGraphicsColorizeEffect(goToPageBtn);
             effect->setColor(QColor(250, 0, 0));
             goToPageEdt->setGraphicsEffect(effect);
             return;
         }
+        model->setPage(goToPageEdt->text().toLongLong());
+        client->sendEntriesRequest();
         goToPageEdt->setText("");
-        proxyModel->showPage(goToPageEdt->text().toLongLong());
-        view->update(proxyModel->index(proxyModel->getEntriesPerPage(), model->LAST));
         view->setFocus();
-    });
-    connect(goToPageEdt, &QLineEdit::textChanged, [&] () {
-        goToPageEdt->setGraphicsEffect(Q_NULLPTR);
     });
 
     connect(entriesPerPageBtn, &QPushButton::clicked, [&] {
@@ -564,20 +535,25 @@ void StudentAbsenceTableApp::setConnections()
             entriesPerPageEdt->setGraphicsEffect(effect);
             return;
         }
+        auto clueEntryInd = model->getEntriesPerPage() * (model->getPage() - 1) + 1;
+        model->setEntriesPerPage(entriesPerPageEdt->text().toLongLong());
+        auto newPage = clueEntryInd / model->getEntriesPerPage() + 1;
+        model->setPage(newPage);
+        client->sendEntriesRequest();
         entriesPerPageEdt->setText("");
-        auto clueEntryInd = proxyModel->getEntriesPerPage() * (proxyModel->getPage() - 1) + 1;
-        proxyModel->setEntriesPerPage(entriesPerPageEdt->text().toLongLong());
-        auto newPage = clueEntryInd / proxyModel->getEntriesPerPage() + 1;
-        proxyModel->showPage(newPage);
-        view->update(proxyModel->index(proxyModel->getEntriesPerPage(), model->LAST));
         view->setFocus();
+    });
+    connect(goToPageEdt, &QLineEdit::textChanged, [&] () {
+        goToPageEdt->setGraphicsEffect(Q_NULLPTR);
     });
     connect(entriesPerPageEdt, &QLineEdit::textChanged, [&] () {
         entriesPerPageEdt->setGraphicsEffect(Q_NULLPTR);
     });
 
-    connect(
-        model, &StudentAbsenceModel::dataChanged,
-        [this] () { documentModified = true; }
-    );
+    connect(client, &StudentAbsenceClient::connectedToServer, [this] {
+        modeLbl->setText("подключено к серверу");
+    });
+    connect(client, &StudentAbsenceClient::disconnectedFromServer, [this] {
+        disableTableView();
+    });
 }

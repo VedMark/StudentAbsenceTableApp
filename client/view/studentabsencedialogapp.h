@@ -1,13 +1,12 @@
 #pragma once
 
-#include "../model/studentabsencemodel.h"
-#include "../view/HierarchicalHeaderView.h"
 #include "../view/proxymodel.h"
+#include "../view/HierarchicalHeaderView.h"
 #include "../controller/adddialog.h"
 #include "../controller/finddialog.h"
-#include "../controller/modelcontroller.h"
 #include "../controller/removedialog.h"
 
+#include <QFrame>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMainWindow>
@@ -28,21 +27,14 @@ public:
     StudentAbsenceTableApp(QWidget *parent = 0);
     ~StudentAbsenceTableApp();
 
-    inline ModelController *getController() const
-    { return controller; }
-    inline void setController(ModelController *value)
-    { controller = value; }
-
 protected:
     void contextMenuEvent(QContextMenuEvent *);
     void closeEvent(QCloseEvent *);
-    void paintEvent(QPaintEvent *);
     void resizeEvent(QResizeEvent *);
 
     bool loadFile(const QString &fileName);
     bool saveFile(const QString &fileName);
     bool agreedToContinue();
-    void setCurrentFileName(const QString &fileName);
 
 protected slots:
     bool newFile();
@@ -50,29 +42,28 @@ protected slots:
     bool save();
     bool saveAs();
 
+    void showStartScreen();
+
     void addEntry();
     void findEntry();
     void removeEntry();
 
     void showConnectWindow();
 
-private:
-    enum mode{
-        LOCAL,
-        NETWORK
-    };
+    void disableTableView();
+    void enableTableView();
 
+private:
     void createMainWidget();
     void createToolBar();
     void createMenu();
     void createContextMenu();
+    void setColumnsSize();
     void setConnections();
 
-    StudentAbsenceModel *model;
-    ProxyModel *proxyModel;
+    ProxyModel *model;
     QTableView *view;
     HierarchicalHeaderView *header;
-    ModelController *controller;
     StudentAbsenceClient *client;
 
     QWidget *mainWidget;
@@ -80,16 +71,14 @@ private:
     QMenu *contextMenu;
     QToolBar *toolBar;
 
-    QString currentFileName;
-
     AddDialog *addDialog;
     FindDialog *findDialog;
     RemoveDialog *removeDialog;
 
-    mode workMode;
-
     bool documentModified;
+    bool documentAvailable;
 
+    QFrame *buttonsFrame;
     QLabel *modeLbl;
     QPushButton *prevPageBtn;
     QPushButton *nextPageBtn;

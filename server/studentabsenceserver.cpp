@@ -7,25 +7,23 @@
 #include <QCursor>
 #include <QDataStream>
 #include <QDesktopWidget>
+#include <QDir>
 #include <QLabel>
 #include <QLayout>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QString>
 #include <QTime>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTextEdit>
 
+const QString StudentAbsenceServer::DATA_DIR_PATH = QStringLiteral("/media/bsuir/sem_4/PPvIS/server_data");
 
 StudentAbsenceServer::StudentAbsenceServer(int nPort, QWidget *parent)
     : QWidget(parent), port(nPort), nextBlockSize(0)
 {
     tcpServer = new QTcpServer(this);
-    model = new StudentAbsenceModel(this);
-    controller = new ModelController(model);
-    dataDir = QDir(QStringLiteral("/media/bsuir/sem_4/PPvIS/server_data"), QStringLiteral("*.xml"));
-    dataDir.setFilter(QDir::Files);
+    controller = new ModelController(&model);
 
     logEdt = new QTextEdit(this);
 
@@ -79,7 +77,6 @@ void StudentAbsenceServer::readClient()
         if(clientSocket->bytesAvailable() < nextBlockSize)
             break;
 
-
         qint16 requestType = 0;
         QString requestString = "";
         QString surname = "";
@@ -96,73 +93,71 @@ void StudentAbsenceServer::readClient()
         {
         case ADD:{
             in >> surname >> name >> patronymic >> group
-               >> illness >> another >> hooky;
+                    >> illness >> another >> hooky;
             requestString = QStringLiteral("add entry");
-            controller->addEntry(model->rowCount(), StudentEntry(RussianFullName(surname, name, patronymic),
-                                                                 Group(group),
-                                                                 Absence(illness, another, hooky)));
+            controller->addEntry(StudentEntry(RussianFullName(surname, name, patronymic),
+                                              Group(group),
+                                              Absence(illness, another, hooky)));
+            sendModelSize(clientSocket);
             break;
         }
         case SEARCH:{
-            QString searchType;
+            qint8 searchType;
             QStringList list;
             in >> searchType >> list;
             requestString = QStringLiteral("find entries");
-            controller->findEntries((SearchPattern)searchType.toInt(), list);
+            auto result = controller->findEntries((SearchPattern)searchType, list);
+            sendSearchResult(clientSocket, result);
             break;
         }
         case REMOVE:{
-            QString searchType;
+            qint8 searchType;
             QStringList list;
             in >> searchType >> list;
             requestString = QStringLiteral("remove entries");
-            controller->removeEntries((SearchPattern)searchType.toInt(), list);
+            auto result = controller->removeEntries((SearchPattern)searchType, list);
+            sendRemoveResult(clientSocket, result);
+            sendModelSize(clientSocket);
             break;
         }
         case NEW:
             requestString = QStringLiteral("new table");
             controller->clearModel();
+            sendModelSize(clientSocket);
             break;
         case CHOOSE_FILE:
             requestString = QStringLiteral("choose file");
-            sendStringList(clientSocket, dataDir.entryList());
+            sendStringList(clientSocket);
             break;
         case SAVE:
             in >> fileName;
             requestString = QStringLiteral("save table");
-            controller->saveModel(dataDir.absolutePath() + QStringLiteral("/") + fileName);
-        case OPEN:
+            controller->saveModel(DATA_DIR_PATH + QStringLiteral("/") + fileName);
+            break;
+        case OPEN:{
             in >> fileName;
             requestString = QStringLiteral("open table");
-            controller->loadModel(dataDir.absolutePath() + QStringLiteral("/") + fileName);
-            sendModel(clientSocket);
+            controller->loadModel(DATA_DIR_PATH + QStringLiteral("/") + fileName);
+            qint64 beginInd = 0, count = 0;
+            in >> beginInd >> count;
+            sendModelSize(clientSocket);
+            sendEntries(clientSocket, beginInd, count);
             break;
         }
-
+        case ENTRIES:{
+            qint64 beginInd = 0, count = 0;
+            in >> beginInd >> count;
+            requestString = QStringLiteral("send entries");
+            sendEntries(clientSocket, beginInd, count);
+            break;
+        }
+        }
         logEdt->append(QTime::currentTime().toString()
                        + QStringLiteral(" Client has sent request: ")
                        + requestString);
         nextBlockSize = 0;
         sendResponce(clientSocket, QStringLiteral("Server response: Received request"));
     }
-}
-
-void StudentAbsenceServer::sendModel(QTcpSocket *socket)
-{
-    QByteArray arrBlock;
-    QDataStream out(&arrBlock, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_2);
-    out << qint16(0) << qint16(MODEL);
-    foreach (const StudentEntry& entry, model->getStudentEntryList()) {
-        out << entry.name.getSurname() << entry.name.getName() << entry.name.getPatronymic()
-            << entry.group.getValue() << entry.absence.getIllness()
-            << entry.absence.getAnother() << entry.absence.getHooky();
-    }
-
-    out.device()->seek(0);
-    out << qint16(arrBlock.size() - sizeof(qint16));
-
-    socket->write(arrBlock);
 }
 
 void StudentAbsenceServer::sendResponce(QTcpSocket *socket, const QString &text)
@@ -178,15 +173,82 @@ void StudentAbsenceServer::sendResponce(QTcpSocket *socket, const QString &text)
     socket->write(arrBlock);
 }
 
-void StudentAbsenceServer::sendStringList(QTcpSocket *socket, const QStringList &list)
+void StudentAbsenceServer::sendEntries(QTcpSocket *socket, qint64 begin, qint64 count)
 {
     QByteArray arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_2);
+    out << qint16(0) << qint16(MODEL);
+    for(qint64 i = begin; count > 0 && i < model.size(); --count, ++i){
+        out << model.at(i).name.getSurname() << model.at(i).name.getName()
+            << model.at(i).name.getPatronymic() << model.at(i).group.getValue()
+            << model.at(i).absence.getIllness() << model.at(i).absence.getAnother()
+            << model.at(i).absence.getHooky();
+    }
+
+    out.device()->seek(0);
+    out << qint16(arrBlock.size() - sizeof(qint16));
+
+    socket->write(arrBlock);
+}
+
+void StudentAbsenceServer::sendModelSize(QTcpSocket *socket)
+{
+    QByteArray arrBlock;
+    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_2);
+    out << qint16(0) << qint16(MODEL_SIZE) << qint64(model.size());
+
+    out.device()->seek(0);
+    out << qint16(arrBlock.size() - sizeof(qint16));
+
+    socket->write(arrBlock);
+}
+
+void StudentAbsenceServer::sendStringList(QTcpSocket *socket)
+{
+    QDir dataDir = QDir(DATA_DIR_PATH, QStringLiteral("*.xml"));
+    dataDir.setFilter(QDir::Files);
+    QByteArray arrBlock;
+    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_2);
     out << qint16(0) << qint16(FILES);
-    foreach (const QString& text, list) {
+    foreach (const QString& text, dataDir.entryList()) {
         out << text;
     }
+
+    out.device()->seek(0);
+    out << qint16(arrBlock.size() - sizeof(qint16));
+
+    socket->write(arrBlock);
+}
+
+void StudentAbsenceServer::sendSearchResult(QTcpSocket *socket, const Students list)
+{
+    QByteArray arrBlock;
+    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_2);
+    out << qint16(0) << qint16(SEARCH_RES);
+    foreach (const StudentEntry& entry, list) {
+        out << entry.name.getSurname() << entry.name.getName()
+            << entry.name.getPatronymic() << entry.group.getValue()
+            << entry.absence.getIllness() << entry.absence.getAnother()
+            << entry.absence.getHooky();
+    }
+
+    out.device()->seek(0);
+    out << qint16(arrBlock.size() - sizeof(qint16));
+
+    socket->write(arrBlock);
+}
+
+void StudentAbsenceServer::sendRemoveResult(QTcpSocket *socket, qint64 count)
+{
+    QByteArray arrBlock;
+    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_2);
+    out << qint16(0) << qint16(REMOVE_RES);
+        out << count;
 
     out.device()->seek(0);
     out << qint16(arrBlock.size() - sizeof(qint16));

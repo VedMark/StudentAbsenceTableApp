@@ -13,7 +13,7 @@ const QString XMLParser::XML_TAG_ILLNESS = "illness";
 const QString XMLParser::XML_TAG_ANOTHER = "another";
 const QString XMLParser::XML_TAG_HOOKY = "hooky";
 
-XMLParser::XMLParser(StudentAbsenceModel *model_)
+XMLParser::XMLParser(Students *model_)
     : model(model_)
 {}
 
@@ -28,10 +28,9 @@ bool XMLParser::read(const QString& file)
         throw FileOpenException();
 
     QXmlStreamReader reader(&inFile);
-
-    StudentAbsenceModel::students newDataList;
     StudentEntry *entry;
 
+    model->clear();
     while(!reader.atEnd())
     {
         QXmlStreamReader::TokenType tokenEntry = reader.readNext();
@@ -58,11 +57,8 @@ bool XMLParser::read(const QString& file)
                 entry->absence.setHooky(reader.readElementText().toInt());
         }
         else if(tokenEntry == QXmlStreamReader::EndElement && reader.name() == XML_TAG_ENTRY)
-            newDataList << *entry;
+            model->append(*entry);
     }
-
-    model->removeRows(0, model->entriesSize(), QModelIndex());
-    model->setStudentEntryList(newDataList);
 
     inFile.close();
     return true;
@@ -80,7 +76,7 @@ bool XMLParser::write(const QString& file)
     writer.writeStartDocument();
     writer.writeStartElement(XML_TAG_STUDENT_DATA);
 
-    foreach (const StudentEntry& entry, model->getStudentEntryList()) {
+    foreach (const StudentEntry& entry, *model) {
         writer.writeStartElement(XML_TAG_ENTRY);
         writeEntry(writer, entry);
         writer.writeEndElement();

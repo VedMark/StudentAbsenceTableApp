@@ -16,18 +16,26 @@
 #include <QTcpSocket>
 #include <QTime>
 
-StudentAbsenceClient::StudentAbsenceClient(StudentAbsenceModel *model_, QWidget *parent)
-    : QWidget(parent), nextBlockSize(0), model(model_)
+StudentAbsenceClient::StudentAbsenceClient(ProxyModel *model_, QWidget *parent)
+    : QDialog(parent), nextBlockSize(0), model(model_)
 {
     tcpSocket = new QTcpSocket(this);
     connect(tcpSocket, &QTcpSocket::connected, [this] {
+        connected = true;
         emit connectedToServer();
-        logEdt->append(QTime::currentTime().toString() + QStringLiteral(" connected to server: ") + tcpSocket->localAddress().toString());
+        logEdt->append(QTime::currentTime().toString() + QStringLiteral(" connected to server: ")
+                       + tcpSocket->localAddress().toString());
+        this->hide();
     });
     connect(tcpSocket, &QTcpSocket::disconnected, [this] {
+        connected = false;
         emit disconnectedFromServer();
-        logEdt->append(QTime::currentTime().toString() + QStringLiteral(" disconnected from server: ") + tcpSocket->localAddress().toString());
+        logEdt->append(QTime::currentTime().toString() + QStringLiteral(" disconnected from server: ")
+                       + tcpSocket->localAddress().toString());
     });
+    connect(tcpSocket, SIGNAL( readyRead() ), this, SLOT( slotReadyRead() ) );
+    connect(tcpSocket,  SIGNAL( error(QAbstractSocket::SocketError) ),
+            this,       SLOT( handleError(QAbstractSocket::SocketError) ) );
 
     logEdt = new QTextEdit();
 
@@ -37,9 +45,7 @@ StudentAbsenceClient::StudentAbsenceClient(StudentAbsenceModel *model_, QWidget 
     hostNameEdt = new QLineEdit(this);
     portEdt = new QLineEdit(this);
     hostNameEdt->setMaximumWidth(100);
-    hostNameEdt->setText("localhost");
     portEdt->setMaximumWidth(100);
-    portEdt->setText("2323");
     connect(hostNameEdt, &QLineEdit::textChanged, [&] () {
         hostNameEdt->setGraphicsEffect(Q_NULLPTR);
     });
@@ -49,6 +55,8 @@ StudentAbsenceClient::StudentAbsenceClient(StudentAbsenceModel *model_, QWidget 
 
     locateWidgets();
 
+    setMaximumSize(sizeHint());
+    setMinimumSize(sizeHint());
     move((QApplication::desktop()->width() - width()) / 2,
          (QApplication::desktop()->height() - height()) / 2);
     setWindowIcon(QIcon(":/images/connectToServer.png"));
@@ -56,7 +64,9 @@ StudentAbsenceClient::StudentAbsenceClient(StudentAbsenceModel *model_, QWidget 
 }
 
 StudentAbsenceClient::~StudentAbsenceClient()
-{}
+{
+    disconnect(this, Q_NULLPTR, Q_NULLPTR, Q_NULLPTR);
+}
 
 void StudentAbsenceClient::sendAddRequest(const StudentEntry& entry)
 {
@@ -72,6 +82,7 @@ void StudentAbsenceClient::sendAddRequest(const StudentEntry& entry)
     out.device()->seek(0);
     out << qint16(arrBlock.size() - sizeof(qint16));
     tcpSocket->write(arrBlock);
+    sendEntriesRequest();
 }
 
 void StudentAbsenceClient::sendFindRequest(SearchPattern type, const QStringList& searchList)
@@ -92,13 +103,13 @@ void StudentAbsenceClient::sendRemoveRequest(SearchPattern type, const QStringLi
     QByteArray arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_2);
-    out << qint16(0) << qint16(ADD);
 
     out << qint16(0) << qint16(REMOVE) << qint8(type) << searchList;
 
     out.device()->seek(0);
     out << qint16(arrBlock.size() - sizeof(qint16));
     tcpSocket->write(arrBlock);
+    sendEntriesRequest();
 }
 
 void StudentAbsenceClient::sendFilesRequest()
@@ -106,6 +117,7 @@ void StudentAbsenceClient::sendFilesRequest()
     QByteArray arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_2);
+
     out << qint16(0) << qint16(CHOOSE_FILE);
 
     out.device()->seek(0);
@@ -119,8 +131,10 @@ void StudentAbsenceClient::sendNewRequest()
     QByteArray arrBlock;
     QDataStream out(&arrBlock, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_2);
+
     out << qint16(0) << qint16(NEW);
 
+    setCurrentFileName("");
     out.device()->seek(0);
     out << qint16(arrBlock.size() - sizeof(qint16));
     tcpSocket->write(arrBlock);
@@ -128,46 +142,74 @@ void StudentAbsenceClient::sendNewRequest()
 
 void StudentAbsenceClient::sendSaveRequest()
 {
-    sendFilesRequest();
-    connect(this, &StudentAbsenceClient::filesReady, [this] {
-        auto networkDialog = new NetworkDialog(filesList, FOR_SAVE, this);
-        connect(networkDialog, &NetworkDialog::fileChoosen, [this] (const QString& fileName) {
-            QByteArray arrBlock;
-            QDataStream out(&arrBlock, QIODevice::WriteOnly);
-            out.setVersion(QDataStream::Qt_5_2);
-            out << qint16(0) << qint16(SAVE) << fileName;
+    if(getCurrentFileName() != ""){
+        QByteArray arrBlock;
+        QDataStream out(&arrBlock, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_5_2);
 
-            out.device()->seek(0);
-            out << qint16(arrBlock.size() - sizeof(qint16));
-            tcpSocket->write(arrBlock);
+        out << qint16(0) << qint16(SAVE) << getCurrentFileName();
 
-            disconnect(sender());
-        });
-        disconnect(this, &StudentAbsenceClient::filesReady, this, Q_NULLPTR);
-    });
-
+        out.device()->seek(0);
+        out << qint16(arrBlock.size() - sizeof(qint16));
+        tcpSocket->write(arrBlock);
+    }
+    else
+        sendSaveAsRequest();
 }
 
-void StudentAbsenceClient::sendOpenRequest()
+void StudentAbsenceClient::sendSaveAsRequest()
 {
     sendFilesRequest();
     connect(this, &StudentAbsenceClient::filesReady, [this] {
+        auto networkDialog = new NetworkDialog(filesList, FOR_SAVE, this);
+        networkDialog->show();
+        connect(networkDialog, &NetworkDialog::fileChoosen, [this, networkDialog] (const QString& fileName) {
+            setCurrentFileName(fileName);
+            sendSaveRequest();
+
+            networkDialog->deleteLater();
+        });
+        disconnect(this, &StudentAbsenceClient::filesReady, this, Q_NULLPTR);
+    });
+}
+
+void StudentAbsenceClient::sendOpenRequest(qint64 begin, qint64 count)
+{
+    sendFilesRequest();
+    connect(this, &StudentAbsenceClient::filesReady, [this, begin, count] {
         auto networkDialog = new NetworkDialog(filesList, FOR_OPEN, this);
         networkDialog->show();
-        connect(networkDialog, &NetworkDialog::fileChoosen, [this] (const QString& fileName) {
+        connect(networkDialog, &NetworkDialog::fileChoosen, [this, begin, count, networkDialog] (const QString& fileName) {
             QByteArray arrBlock;
             QDataStream out(&arrBlock, QIODevice::WriteOnly);
             out.setVersion(QDataStream::Qt_5_2);
-            out << qint16(0) << qint16(OPEN) << fileName;
 
+            out << qint16(0) << qint16(OPEN) << fileName << begin << count;
+
+            setCurrentFileName(fileName);
             out.device()->seek(0);
             out << qint16(arrBlock.size() - sizeof(qint16));
             tcpSocket->write(arrBlock);
 
-            disconnect(sender());
+            networkDialog->deleteLater();
         });
         disconnect(this, &StudentAbsenceClient::filesReady, this, Q_NULLPTR);
     });
+}
+
+void StudentAbsenceClient::sendEntriesRequest()
+{
+    QByteArray arrBlock;
+    QDataStream out(&arrBlock, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_2);
+
+    out << qint16(0) << qint16(ENTRIES)
+        << qint64((model->getPage() - 1) * model->getEntriesPerPage())
+        << qint64(model->getEntriesPerPage());
+
+    out.device()->seek(0);
+    out << qint16(arrBlock.size() - sizeof(qint16));
+    tcpSocket->write(arrBlock);
 }
 
 void StudentAbsenceClient::closeEvent(QCloseEvent *)
@@ -177,7 +219,6 @@ void StudentAbsenceClient::closeEvent(QCloseEvent *)
 
 void StudentAbsenceClient::connectToServer()
 {
-    this->hide();
     auto ok = true;
     qint64 num = portEdt->text().toShort(&ok);
     if(!(ok) || num < 1){
@@ -187,16 +228,11 @@ void StudentAbsenceClient::connectToServer()
         return;
     }
 
-    tcpSocket->connectToHost(hostNameEdt->text(), portEdt->text().toShort());
-
-    connect(tcpSocket, SIGNAL( readyRead() ), this, SLOT( slotReadyRead() ) );
-    connect(tcpSocket,  SIGNAL( error(QAbstractSocket::SocketError) ),
-            this,       SLOT( handleError(QAbstractSocket::SocketError) ) );
+    tcpSocket->connectToHost(hostNameEdt->text(), num);
 }
 
 void StudentAbsenceClient::disconnectFromServer()
 {
-    hide();
     tcpSocket->disconnectFromHost();
 }
 
@@ -225,7 +261,7 @@ void StudentAbsenceClient::slotReadyRead()
             break;
         }
         case MODEL:{
-            StudentAbsenceModel::students studentList;
+            ProxyModel::Students studentList;
             QString surname = "";
             QString name = "";
             QString patronymic = "";
@@ -244,14 +280,47 @@ void StudentAbsenceClient::slotReadyRead()
             model->setStudentEntryList(studentList);
             break;
         }
+        case MODEL_SIZE:{
+            qint64 size;
+            in >> size;
+            model->setSize(size);
+            break;
+        }
         case FILES:{
             filesList = QStringList();
             QString element;
-            while(!in.atEnd()){
+            forever{
                 in >> element;
+                if(in.atEnd()) break;
                 filesList.append(element);
             }
             emit filesReady();
+            break;
+        }
+        case SEARCH_RES:{
+            ProxyModel::Students studentList;
+            QString surname = "";
+            QString name = "";
+            QString patronymic = "";
+            QString group = "";
+            qint16 illness = 0;
+            qint16 another = 0;
+            qint16 hooky = 0;
+            forever{
+                in >> surname >> name >> patronymic >> group
+                   >> illness >> another >> hooky;
+                if(in.atEnd()) break;
+                studentList.append(StudentEntry(RussianFullName(surname, name, patronymic),
+                                                Group(group),
+                                                Absence(illness, another, hooky)));
+            }
+            emit searchResultReturned(studentList);
+            break;
+        }
+        case REMOVE_RES:{
+            qint64 count = 0;
+            in >> count;
+            emit removeResultReturned(count);
             break;
         }
         }
@@ -281,11 +350,12 @@ void StudentAbsenceClient::locateWidgets()
     connect(connectBtn, SIGNAL( clicked(bool) ), this, SLOT( connectToServer() ) );
 
     auto disconnectBtn = new QPushButton(tr("&Отключиться"), this);
-    connect(disconnectBtn, SIGNAL( clicked(bool) ), this, SLOT( disconnectFromServer() ) );\
+    connect(disconnectBtn, SIGNAL( clicked(bool) ), this, SLOT( disconnectFromServer() ) );
 
     auto topLayout = new QHBoxLayout;
     topLayout->addWidget(new QLabel(tr("Хост"), this));
     topLayout->addWidget(hostNameEdt);
+    topLayout->addStretch();
     topLayout->addWidget(new QLabel(tr("Порт"), this));
     topLayout->addWidget(portEdt);
 
@@ -294,7 +364,7 @@ void StudentAbsenceClient::locateWidgets()
     topBtnLayout->addWidget(disconnectBtn);
 
     auto mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(new QLabel(tr("<H1>Клиент</H1>"), this));
+    mainLayout->addWidget(new QLabel(tr("<H1>Установка соединения</H1>"), this));
     mainLayout->addSpacing(20);
     mainLayout->addLayout(topLayout);
     mainLayout->addLayout(topBtnLayout);

@@ -3,7 +3,7 @@
 
 #include <algorithm>
 
-ModelController::ModelController(StudentAbsenceModel *controlModel)
+ModelController::ModelController(Students *controlModel)
     :searchList(Q_NULLPTR)
 {
     model = controlModel;
@@ -15,73 +15,55 @@ ModelController::~ModelController()
     delete xmlParser;
 }
 
-StudentAbsenceModel *ModelController::getModel() const
+Students *ModelController::getModel() const
 {
     return model;
 }
 
-void ModelController::setModel(StudentAbsenceModel *value)
+void ModelController::setModel(Students *value)
 {
     model = value;
 }
 
-void ModelController::addEntry(qint64 row, const StudentEntry& entry)
+void ModelController::addEntry(const StudentEntry& entry)
 {
-    model->insertRow(row);
-
-    model->setData(
-                model->index(row, StudentAbsenceModel::NAME, QModelIndex()),
-                QVariant(entry.name.getFullName()), Qt::EditRole);
-    model->setData(
-                model->index(row, StudentAbsenceModel::GROUP, QModelIndex()),
-                QVariant(entry.group.getValue()), Qt::EditRole);
-    model->setData(
-                model->index(row, StudentAbsenceModel::ILLNESS, QModelIndex()),
-                QVariant(QString::number(entry.absence.getIllness())), Qt::EditRole);
-    model->setData(
-                model->index(row, StudentAbsenceModel::ANOTHER, QModelIndex()),
-                QVariant(QString::number(entry.absence.getAnother())), Qt::EditRole);
-    model->setData(
-                model->index(row, StudentAbsenceModel::HOOKY, QModelIndex()),
-                QVariant(QString::number(entry.absence.getHooky())), Qt::EditRole);
+    model->push_back(entry);
 }
 
-StudentAbsenceModel::students ModelController::findEntries(SearchPattern pattern, const QStringList &list)
+Students ModelController::findEntries(SearchPattern pattern, const QStringList &list)
 {
     std::function<bool (const StudentEntry &)> cond = condition(pattern);
     searchList = &list;
 
-    StudentAbsenceModel::students searchResult;
-    std::copy_if(model->getStudentEntryList().begin(),
-                 model->getStudentEntryList().end(),
+    Students searchResult;
+    std::copy_if(model->begin(),
+                 model->end(),
                  std::back_inserter(searchResult),
                  cond);
     return searchResult;
 }
 
-void ModelController::removeEntries(SearchPattern pattern, const QStringList &list)
+qint64 ModelController::removeEntries(SearchPattern pattern, const QStringList &list)
 {
-    StudentAbsenceModel::students &studentList = model->getStudentEntryList();
-    auto length_before = model->getStudentEntryList().length();
     std::function<bool (const StudentEntry &)> cond = condition(pattern);
     searchList = &list;
-
-    studentList.erase(
-                std::remove_if(studentList.begin(),studentList.end(), cond),
-                studentList.end());
-
-    auto length_after = model->getStudentEntryList().length();
-    model->removeRows(length_after, length_before - length_after, QModelIndex());
+    qint64 size_before = model->size();
+    model->erase(
+                std::remove_if(model->begin(),model->end(), cond),
+                model->end());
+    return qint64(size_before - model->size());
 }
 
 void ModelController::clearModel()
 {
-    model->removeRows(0, model->entriesSize(), QModelIndex());
+    *model = Students();
 }
 
 bool ModelController::saveModel(QString fileName)
 {
     try{
+        if(!fileName.endsWith(QStringLiteral(".xml")))
+            fileName += QStringLiteral(".xml");
         xmlParser->write(fileName);
     }
     catch(...){
@@ -116,13 +98,15 @@ std::function<bool (const StudentEntry &)> ModelController::condition(SearchPatt
     case SECOND:{
         std::function<bool (const StudentEntry&)> equalAbsence =
                 [&] (const StudentEntry& entry) -> bool {
-                    switch (searchList->at(1).toInt()) {
-                    case StudentAbsenceModel::ILLNESS:
+                    switch ((Column)searchList->at(1).toInt() + 2) {
+                    case ILLNESS:
                         return entry.absence.getIllness() == searchList->at(2).toInt();
-                    case StudentAbsenceModel::ANOTHER:
+                    case ANOTHER:
                         return entry.absence.getAnother() ==searchList->at(2).toInt();
-                    case StudentAbsenceModel::HOOKY:
+                    case HOOKY:
                         return entry.absence.getHooky() == searchList->at(2).toInt();
+                    default:
+                        break;
                     }
                     return false;
                 };

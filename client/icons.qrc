@@ -2,20 +2,22 @@
 <qresource>
         <file>images/spreadsheet.png</file>
 
-	<file>images/new.png</file>
-	<file>images/open.png</file>
-	<file>images/save.png</file>
-	<file>images/exit.png</file>
+		<file>images/new.png</file>
+		<file>images/open.png</file>
+		<file>images/save.png</file>
+	    <file>images/closeTable.png</file>
+		<file>images/exit.png</file>
 
-	<file>images/addEntries.png</file>
-	<file>images/findEntries.png</file>
-	<file>images/removeEntries.png</file>
+		<file>images/addEntries.png</file>
+		<file>images/findEntries.png</file>
+		<file>images/removeEntries.png</file>
 
-	<file>images/prevPage.png</file>
-	<file>images/nextPage.png</file>
-	<file>images/firstPage.png</file>
-	<file>images/lastPage.png</file>
+		<file>images/prevPage.png</file>
+		<file>images/nextPage.png</file>
+		<file>images/firstPage.png</file>
+		<file>images/lastPage.png</file>
 
-        <file>images/connectToServer.png</file>
+	    <file>images/connectToServer.png</file>
+
 </qresource>
 </RCC>

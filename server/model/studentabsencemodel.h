@@ -1,8 +1,8 @@
 #pragma once
 
-#include <QAbstractTableModel>
 #include <QList>
-#include <QStandardItemModel>
+#include <QString>
+#include <QStringList>
 
 
 class RussianFullName;
@@ -10,68 +10,17 @@ class Group;
 class Absence;
 struct StudentEntry;
 
-class StudentAbsenceModel : public QAbstractTableModel
-{
-    Q_OBJECT
+using Students = QList<StudentEntry>;
 
-public:
-    typedef QList<StudentEntry> students;
-
-    enum Column{
-        NAME,
-        GROUP,
-        ILLNESS,
-        ANOTHER,
-        HOOKY,
-        TOTAL,
-        LAST
-    };
-
-    explicit StudentAbsenceModel(QObject *parent = 0);
-    ~StudentAbsenceModel();
-
-    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-
-    bool hasIndex(int row, int column, const QModelIndex &parent) const;
-    QModelIndex index(int row, int column, const QModelIndex &parent) const override;
-
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override;
-    int columnCount(const QModelIndex &parent = QModelIndex()) const override;
-
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
-    bool setData(const QModelIndex &index, const QVariant &value, int role) override;
-
-    bool insertRows(int row, int count, const QModelIndex &parent) override;
-    bool removeRows(int row, int count, const QModelIndex &parent) override;
-
-    Qt::ItemFlags flags(const QModelIndex &index) const override;
-
-    inline const StudentEntry& at(int row) const
-    { return studentEntryList.at(row); }
-
-    inline qint64 entriesSize() const
-    { return studentEntryList.size(); }
-
-    inline students &getStudentEntryList()
-    { return studentEntryList; }
-    inline void setStudentEntryList(const students &value){
-        beginInsertRows(QModelIndex(),0, value.size() - 1);
-        studentEntryList = value;
-        endInsertRows();
-        emit dataChanged(
-                    index(0, 0, QModelIndex()),
-                    index(studentEntryList.size(), LAST, QModelIndex())
-                    );
-    }
-
-private:
-    void createHorizontalHeader();
-
-    students studentEntryList;
-    QStandardItemModel *horizontalHeader;
+enum Column{
+    NAME,
+    GROUP,
+    ILLNESS,
+    ANOTHER,
+    HOOKY,
+    TOTAL,
+    LAST
 };
-
-
 
 class RussianFullName{
 private:

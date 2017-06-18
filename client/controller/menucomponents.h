@@ -12,6 +12,7 @@ public:
     QAction *openTable;
     QAction *saveTable;
     QAction *saveAsTable;
+    QAction *closeTable;
     QAction *exitApp;
 
     QAction *prevPage;

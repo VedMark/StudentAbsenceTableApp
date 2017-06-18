@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../model/studentabsencemodel.h"
+#include "../view/proxymodel.h"
 #include "../studentabsenceclient.h"
 
 #include <QDialog>
@@ -14,11 +14,15 @@ class AddDialog : public QDialog
     Q_OBJECT
 
 public:
-    AddDialog(StudentAbsenceModel *model, StudentAbsenceClient * client, QWidget *parent = Q_NULLPTR);
+    AddDialog(ProxyModel *model, StudentAbsenceClient * client, QWidget *parent = Q_NULLPTR);
     ~AddDialog();
 
 signals:
     void numFilledEditsChanged(int);
+    void notNoneResult();
+
+protected:
+    void closeEvent(QCloseEvent *);
 
 protected slots:
     virtual void createEntry();
@@ -37,7 +41,7 @@ private:
 
     const qint8 MAX_NUM_FILLED_EDITS = 7;
 
-    StudentAbsenceModel *model;
+    ProxyModel *model;
     StudentAbsenceClient *client;
 
     QPushButton *addBtn;

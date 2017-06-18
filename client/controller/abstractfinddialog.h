@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../model/studentabsencemodel.h"
+#include "../view/proxymodel.h"
 #include "../studentabsenceclient.h"
 
 #include <QComboBox>
@@ -21,17 +21,13 @@ class AbstractFindDialog : public QDialog
     Q_OBJECT
 
 public:
-    AbstractFindDialog(StudentAbsenceModel *model, StudentAbsenceClient *, QWidget *parent = Q_NULLPTR);
+    AbstractFindDialog(ProxyModel *model, StudentAbsenceClient *, QWidget *parent = Q_NULLPTR);
     ~AbstractFindDialog();
-
 
 signals:
     void numFilledEditsChanged(int);
 
 protected:
-
-    virtual void displayStudentEntryList(const StudentAbsenceModel::students&);
-
     const qint8 MAX_NUM_FILLED_EDITS = 2;
 
 
@@ -43,7 +39,7 @@ protected:
     bool verifyEdits();
 
 
-    StudentAbsenceModel *model;
+    ProxyModel *model;
     StudentAbsenceClient *client;
 
     QPushButton *okBtn;
