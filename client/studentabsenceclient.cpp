@@ -23,15 +23,17 @@ StudentAbsenceClient::StudentAbsenceClient(ProxyModel *model_, QWidget *parent)
     connect(tcpSocket, &QTcpSocket::connected, [this] {
         connected = true;
         emit connectedToServer();
-        logEdt->append(QTime::currentTime().toString() + QStringLiteral(" connected to server: ")
-                       + tcpSocket->localAddress().toString());
+        logEdt->append(QTime::currentTime().toString() + QString(" connected to server - %1:%2")
+                       .arg(tcpSocket->localAddress().toString())
+                       .arg(QString::number(tcpSocket->localPort())));
         this->hide();
     });
     connect(tcpSocket, &QTcpSocket::disconnected, [this] {
         connected = false;
         emit disconnectedFromServer();
-        logEdt->append(QTime::currentTime().toString() + QStringLiteral(" disconnected from server: ")
-                       + tcpSocket->localAddress().toString());
+        logEdt->append(QTime::currentTime().toString() + QStringLiteral(" disconnected from server - %1:%2")
+                       .arg(tcpSocket->localAddress().toString())
+                       .arg(QString::number(tcpSocket->localPort())));
     });
     connect(tcpSocket, SIGNAL( readyRead() ), this, SLOT( slotReadyRead() ) );
     connect(tcpSocket,  SIGNAL( error(QAbstractSocket::SocketError) ),
@@ -55,8 +57,7 @@ StudentAbsenceClient::StudentAbsenceClient(ProxyModel *model_, QWidget *parent)
 
     locateWidgets();
 
-    setMaximumSize(sizeHint());
-    setMinimumSize(sizeHint());
+    setFixedSize(400, 400);
     move((QApplication::desktop()->width() - width()) / 2,
          (QApplication::desktop()->height() - height()) / 2);
     setWindowIcon(QIcon(":/images/connectToServer.png"));
@@ -220,13 +221,17 @@ void StudentAbsenceClient::closeEvent(QCloseEvent *)
 void StudentAbsenceClient::connectToServer()
 {
     auto ok = true;
-    qint64 num = portEdt->text().toShort(&ok);
+    auto effect = new QGraphicsColorizeEffect(portEdt);
+
+    qint64 num = portEdt->text().toLongLong(&ok);
     if(!(ok) || num < 1){
-        auto effect = new QGraphicsColorizeEffect(portEdt);
         effect->setColor(QColor(250, 0, 0));
         portEdt->setGraphicsEffect(effect);
         return;
     }
+
+    if(hostNameEdt->text() == "")
+        hostNameEdt->setGraphicsEffect(effect);
 
     tcpSocket->connectToHost(hostNameEdt->text(), num);
 }

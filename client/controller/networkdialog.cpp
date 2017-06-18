@@ -17,10 +17,10 @@ NetworkDialog::NetworkDialog(const QStringList &files, Mode mode, QWidget *paren
 
     auto chooseBtn = new QPushButton(tr("Выбрать"), this);
     connect(chooseBtn, &QPushButton::clicked, [this, mode] {
-        if(mode == FOR_OPEN || inputEdt->text() == "")
-            emit fileChoosen(fileCmb->currentText());
-        else
+        if(mode == FOR_SAVE && inputEdt->text() != "")
             emit fileChoosen(inputEdt->text());
+        else
+            emit fileChoosen(fileCmb->currentText());
         close();
     });
 

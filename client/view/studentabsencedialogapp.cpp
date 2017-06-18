@@ -554,6 +554,7 @@ void StudentAbsenceTableApp::setConnections()
         modeLbl->setText("подключено к серверу");
     });
     connect(client, &StudentAbsenceClient::disconnectedFromServer, [this] {
+        modeLbl->setText("отключено от сервера");
         disableTableView();
     });
 }
