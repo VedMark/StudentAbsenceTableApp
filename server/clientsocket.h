@@ -33,14 +33,14 @@ class ClientSocket: public QTcpSocket
 public:
     ClientSocket(qintptr socketDescriptor, QObject *parent = Q_NULLPTR);
 
-    void setConnection();
+    Q_SLOT void setConnection();
 
 public slots:
     void readClient();
 
 signals:
     void errorSignal(QTcpSocket::SocketError socketError);
-    void logInfo(QString);
+    void reqLog(QString);
 
 private:
     void sendResponce(const QString &text);
@@ -49,6 +49,7 @@ private:
     void sendStringList();
     void sendSearchResult(const Students list);
     void sendRemoveResult(qint64 count);
+
 
 private:
     static const QString DATA_DIR_PATH;

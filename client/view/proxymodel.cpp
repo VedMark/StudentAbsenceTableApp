@@ -9,6 +9,7 @@ ProxyModel::ProxyModel(QObject *parent)
 
     entriesPerPage = 20;
     page = 1;
+    size = 0;
 }
 
 ProxyModel::~ProxyModel()

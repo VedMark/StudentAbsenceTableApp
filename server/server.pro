@@ -28,14 +28,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp \
     clientsocket.cpp \
-    studentabsenceserver.cpp \
+    server.cpp \
     model/studentabsencemodel.cpp \
     controller/modelcontroller.cpp \
-    controller/xmlparser.cpp
+    controller/xmlparser.cpp \
+    serverwindow.cpp
 
 HEADERS += \
     clientsocket.h \
-    studentabsenceserver.h \
+    server.h \
     model/studentabsencemodel.h \
     controller/modelcontroller.h \
-    controller/xmlparser.h
+    controller/xmlparser.h \
+    serverwindow.h

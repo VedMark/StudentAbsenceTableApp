@@ -39,9 +39,7 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     modeLbl = new QLabel("отключено от сервера", this);
     statusBar()->addPermanentWidget(modeLbl);
 
-
     client = new StudentAbsenceClient(model, this);
-    showConnectWindow();
 
     createToolBar();
     createMenu();
@@ -53,6 +51,7 @@ StudentAbsenceTableApp::StudentAbsenceTableApp(QWidget *parent)
     setWindowIcon(QIcon(":images/spreadsheet.png"));
     setWindowTitle(tr("Таблица пропусков студентов"));
     showMaximized();
+    showConnectWindow();
 }
 
 StudentAbsenceTableApp::~StudentAbsenceTableApp()

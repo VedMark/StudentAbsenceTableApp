@@ -23,19 +23,19 @@ void ClientSocket::setConnection()
     }
     localAddress_ = localAddress();
     localPort_ = localPort();
-    sendResponce(QStringLiteral("Server response: Connected"));
 
-    connect(this, &ClientSocket::disconnected, [this] {
-        logInfo(QTime::currentTime().toString() + QString(" client (%1:%2) disconnected")
-                .arg(localAddress_.toString())
-                .arg(QString::number(localPort_)));
-        deleteLater();
-    });
-    connect(this, SIGNAL( readyRead() ), this, SLOT( readClient() ) );
+    //sendResponce(QStringLiteral("Server response: Connected"));
 
-    emit logInfo(QTime::currentTime().toString() + QString(" client (%1:%2) connected")
-                 .arg(localAddress().toString())
-                 .arg(QString::number(localPort())));
+//    connect(this, &ClientSocket::disconnected, [this] {
+//        logInfo(QTime::currentTime().toString() + QString(" client (%1:%2) disconnected")
+//                .arg(localAddress_.toString())
+//                .arg(QString::number(localPort_)));
+//        deleteLater();
+//    });
+
+//    emit logInfo(QTime::currentTime().toString() + QString(" client (%1:%2) connected")
+//                 .arg(localAddress().toString())
+//                 .arg(QString::number(localPort())));
 }
 
 void ClientSocket::readClient()
@@ -127,7 +127,7 @@ void ClientSocket::readClient()
             break;
         }
         }
-        emit logInfo(QTime::currentTime().toString()
+        emit reqLog(QTime::currentTime().toString()
                      + QString(" Client (%1:%2) has sent request: ")
                      .arg(localAddress_.toString())
                      .arg(QString::number(localPort_))

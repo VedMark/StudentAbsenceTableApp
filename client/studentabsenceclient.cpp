@@ -45,6 +45,7 @@ StudentAbsenceClient::StudentAbsenceClient(ProxyModel *model_, QWidget *parent)
     logEdt->setReadOnly(true);
 
     hostNameEdt = new QLineEdit(this);
+    hostNameEdt->setInputMask(QStringLiteral("000.000.000.000;_"));
     portEdt = new QLineEdit(this);
     hostNameEdt->setMaximumWidth(100);
     portEdt->setMaximumWidth(100);
